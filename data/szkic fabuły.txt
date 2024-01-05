@@ -1,0 +1,66 @@
+szkic fabuły 
+
+buczisz się w lesie nieopodal wioski :
+	na sobie masz łachmany a obok leży nóż pamietasz atak demonów na twoją wioskę
+
+po wejsciu do wioski rozmiawiasz z burmistrzem i mówi ci o tym że to ostatnia wioska reszte opanowali 4 magowie
+ognia ,wody ,powietrza i ziemi 
+burmistrz mówi że są to zdrajcy rasy ludzi sprzedali nas za dostęp do magii
+
+pyta się ciebie czy ocalisz ich
+zgadzasz się 
+
+ale najpierw przygotowania 
+ - pytasz sie o pomoc w wiosce aby przygotować się do wyprawy:
+ 	-pomoc w polu
+ 	-pomoc z dzikimi zwierzętami jak szczury/dziki 
+ 	-przemycenie do innej wioski jedzenia i broni
+ 	-pokonywanie bandytów
+
+ wyruszasz aby pokonać 1 maga (ziemi) najsłabszego z 4
+	przeciwnicy to golemy
+	bandyci
+	mag (otoczony demonami - 5)
+	po pokonaniu dostajesz klucz ziemi
+
+ wyruszasz aby pokonać 2 maga (powierza) 
+	przeciwnicy to golemy
+	bandyci
+	mag (otoczony demonami - 5)
+	po pokonaniu dostajesz klucz powierza
+
+ wyruszasz aby pokonać 3 maga (wody)
+	przeciwnicy to golemy
+	bandyci
+	mag (otoczony demonami - 5)
+	po pokonaniu dostajesz klucz wody
+
+ wyruszasz aby pokonać 4 maga (ognia)
+	przeciwnicy to golemy
+	impy
+	bandyci
+	mag (otoczony demonami - 5)
+	po pokonaniu dostajesz klucz ognia
+
+wracasz do wioski i mówisz ze pokonałes wroga
+
+w każdej uwolnionej wiosce znajdujesz 1/4 zwoju
+
+	w zwoju jest zaklecie Xhryllor'kai'Zarnath
+	ale nie możesz zrozumieć, postaniawiasz zabac cały zwój do burmistrza :
+		on mówi o portalu 
+		i że aby pokonać całe zło powinieneś zabić władce demonów
+		idzisz do portalu i uruchamiasz go uzywając 4 kluczy i zwoju
+
+po 2 stronie czeka cie wyspa demonów pełna ognia i spalonej ziemi nie masz 
+
+postac bedzie wojownikiem 
+bedzie mógł użyć zaklęcia kamiennego mostu po pokonaniu 1 maga ziemi,
+aby przedostać się między wyspami
+aby wykonac zaklecie musi uzyc kamienia pełnego many
+(po wykonaniu zadań w wiosce)
+
+powietze wiekasz szansa na unik 1%-5% ,10% na zminejszenie obrazen o 15% 
+woda twoją skure pokrywa warstwa lodu zminiejsza obrazenia
+ogien poteżny atak ale jest to miecz obusieczny zadaje 90% hp wszystkim zostaje ci 50% hp do końca gry
+

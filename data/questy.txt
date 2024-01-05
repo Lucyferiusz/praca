@@ -1,0 +1,60 @@
+questy dla 1 wioski:
+
+małe dziecko prosi o uratownie matki z obozu bandytów (opcjonalne) nagroda: 1 mikstura HP,miecz(z bandyty atk )|3bandytów 2 miecze(100HP atk 3-10HP cel 30%) 1 łuk(75HP,10HP cel 10%)   +XP
+
+po udaniu sie do szpitala aby wyleczyc sie prosi cie o znalezienie zioła w lesie (opcjonalne) koszt leczenia spada o 30% zioło srzerze 3 dziki(50HP,atk 5 cel 90%) +XP
+
+potrzeba porzywienia dla wioski mysliwy prosi o pomoc w upolowaniu 5 dzików nagroda (150g +XP)
+
+kupujesz u sprzedawcy dziwną mape prowadzi do jaskini (5 nieumarlych 70HP,atk 1-15 cel 15%)
+
+pomoc farmerowi zbierz plony XP + 30G
+
+
+po pokonaniu 1 maga:
+
+	te co wczesniej ale misja u medyka polega na upolowaniu jadowitego pajaka (koszt mikstur spada o x%) 
+
+zanies od jednego handlaza do 2 paczke i przynies list X g + XP 
+pomoc w uratowaniu kowala (opcjonalen w tej wiosce nie bedzie można kupic broni)
+
+
+2 mag:
+ uratuj lekarza nie ma lekarza 
+
+ 3 mag
+uratuj sprzedawce (opcjonalne) w wiosce nie ma sklepu ze zbroją 
+ 4 mag
+
+zabij wzsystkie pozostałe demony (opcjonalne) demody nie bedo sie pojawiać a ty ocaliłeś kraine do czasu aż władca demonow nie zorirentu je sie i nie sprowadzi armii
+
+otwarcie portalu:
+
+	pokonaj demony
+	uratuj ludzi z obozów
+	zabij władce demonów
+
+	bonus uratuj księżniczke z zamku(lochy) (opcjonalne)(nie uratowanie powoduje zepsucie)
+	BAD ENDING
+	zepsucie zaczynasz czuć że magia zamku cie rozpoznaje jako nowego władce 
+	GOOD ENDING
+	uratowałeś księżniczke z lochu demonów w nagrode postanawi uczynić ciebie nowym księciem a zamek demonów przemianujesz na nową stolice królestwa ludzi 
+	jeżeli nie zabiłeś demonów na poprzedniej wyspie demony zabijają wszystko a ty popradasz w rozpacz
+	
+
+
+
+Misja eliminacji: Wioska cierpi z powodu ataków dzikich zwierząt lub bandytów. Gracz otrzymuje zadanie ochrony wioski, pokonania określonej liczby wrogów lub dzikich zwierząt.
+
+Misja eksploracyjna: Wioska potrzebuje mapy lub informacji na temat pobliskiego lasu lub groty. Gracz musi się wybrać na eksplorację i dostarczyć potrzebne informacje.
+
+
+Misja odnalezienia: Gracz otrzymuje prośbę o odnalezienie zaginionego dziecka lub cennego przedmiotu, który został skradziony. Musi przeszukać pobliskie obszary i odnaleźć zaginione lub skradzione rzeczy.
+
+
+
+Misja eliminacji demonów: Po zdobyciu wystarczającej siły, mieszkańcy wioski mogą poprosić gracza o pomoc w eliminacji demona lub maga, który jest głównym źródłem problemów.
+
+Misja eksploracji groty: Gracz może otrzymać zadanie odkrycia groty lub podziemnego kompleksu, który jest związany z legendą lub ukrytymi skarbami.
+
+Misja zwiadu: Wioska potrzebuje informacji na temat ruchów wroga. Gracz dostaje zadanie, aby zbadać obszar wokół wioski i zdobyć informacje o działaniach demonów lub bandytów.

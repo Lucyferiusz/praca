@@ -1,0 +1,76 @@
+mapa +-
+questy :
+	1)szczury się zalęgły w wiosce czy możesz je zabić? nagroda: 30g /słaba/broń
+	2)przyniś zanieś pozamiataj nagroda 10g - 50g 
+	3)walka z /przeciwnikiem/
+
+	end game:
+		pokonanie władcy demonów w jego wiezy (inna mapa) potrzebna łódź
+		strzeze go armia orków minimum 10 max 15
+		droga usiana zdrajcami ludzkości (bandyci)
+		kilka liszy 4 (respi szkielety 3)
+
+
+
+
+
+przeciwnicy:
+	boss: król demonów
+		-demony (7 grzechów)
+		-nieumarli (szkielety , zombie)
+		-orki
+	zwierzeta:
+		-szczury
+		-dziki
+		-jelenie
+	ludzie:
+		-bandyci :
+			-łucznik
+			-złodzij
+			-wojownik
+			- 4 mag (posiadaja klucze) 
+
+
+
+przedmioty:
+	mikstura HP - wszyscy koszt około 30g
+	mikstura MP - mag 5 na mapie dostepne po uratoaniu wiosek aby uzyc zaklecia mostu koszt 0g
+
+
+	przedmioty zadan :
+		-plony
+		-artefakt
+
+	klucze do portalu na inną wyspe (4) + zaklęcie aktywujące (NPC):
+	ogien,woda,powierze,ziemia
+
+	zbroja/szata
+	miecz - wojownik
+	łuk - łucznik:
+		podpalona
+			szansa na krytyczne obrazenia
+		zatruta:
+			obrazenia w czasie
+		zwykła
+	-mag
+	zaklęcia:
+			-ognia
+			-błyskawicy
+			-lodu
+
+
+
+
+postac :
+	
+	
+		wojownik:hp brak many wiecej def,
+		łucznik: atak zasiwgowy,szasa na ukik
+	hp + 
+	eq +-
+	stats -
+		atk 
+		def
+		stm
+		arm
+		/mana/
