@@ -33,7 +33,6 @@ class Camera:
         y = max(-(self.game.map_height*32 - self.game.WIN_HEIGHT), y)  # Kamery nie przesunięcie się w dół poza koniec mapy
 
         self.camera = pygame.Rect(x, y, self.game.WIN_WIDTH, self.game.WIN_HEIGHT)
-        # print(f"{x = } {y = }")
 
 
 
@@ -45,9 +44,10 @@ class Player(pygame.sprite.Sprite):
         pygame.sprite.Sprite.__init__(self, self.groups)
 
         self.hp = 100  # Początkowa wartość HP
-        self.attack = 10 # Początkowa wartość ataku
+        self.attack = 5 # Początkowa wartość ataku
         self.armor = 0 # Początkowa wartość zbroji
-        
+        self.immunity_timer = 0
+
 
         self.max_hp = 100  # Maksymalna wartość HP
         self.hp_bar_length = 300  # Długość paska HP
@@ -58,6 +58,8 @@ class Player(pygame.sprite.Sprite):
         self.invulnerable_timer = 0  # Licznik czasu trwania nietykalności
 
         self.inventory = []  # Lista przedmiotów w ekwipunku
+
+        self.PLAYER_SPEED = 3
 
 
 
@@ -90,39 +92,30 @@ class Player(pygame.sprite.Sprite):
         
 
         self.rect = self.image.get_rect()
-
-        self.rect.width = self.width*0.75
-        self.rect.height = self.height*0.75
-        self.rect.x = self.x+4
-        self.rect.y = self.y+4
+        self.rect.x = self.x
+        self.rect.y = self.y
 
         self.animation_speed = 200
         self.last_update = 0
+
+    
     def pickup_item(self, item):
         self.inventory.append(item)
-    def use_item(self, item):
-        if len(self.inventory) > 0:
-             
-            
-            if item.item_type == "health_potion":
-                if self.hp ==self.max_hp:
-                    return   # Przywracanie HP na podstawie wartości mikstury
-                else:
-                    self.hp += item.value * self.max_hp
-                    # Ogranicz wartość HP do maksymalnej wartości
-                    self.hp = min(self.max_hp, self.hp)
-            elif item.item_type == "magic":
-                pass
-                # Użyj umiejętności magicznej (np. rzut fireball)
-                # Wymagane dodatkowe implementacje
-            elif item.item_type == "armor":
-                pass
-                # Zwiększ obronę lub inne efekty związane z zbroją
-                # Wymagane dodatkowe implementacje
-            item = self.inventory.pop()  # Usuń i użyj ostatniego przedmiotu z ekwipunku
-   
+    
+    def take_damage(self, damage):
+        if self.immunity_timer <= 0:
+            self.hp -= damage
+            if self.hp <= 0:
+                self.game.game_over()  # Zakończ grę, gdy punkty życia gracza spadną do zera
+            else:
+                self.start_immunity(5 * 5)
+
+    def start_immunity(self, duration):
+        self.immunity_timer = duration
+        
+
     def update(self):
-        # self.draw_health_bar()
+        
         self.movement()
         self.animate()
         self.rect.x += self.x_change
@@ -133,6 +126,8 @@ class Player(pygame.sprite.Sprite):
         self.y_change = 0
         self.check_x_keypress()
         self.handle_invulnerability()
+        if self.immunity_timer > 0:
+            self.immunity_timer -= 1
 
 
     def handle_invulnerability(self):
@@ -152,7 +147,7 @@ class Player(pygame.sprite.Sprite):
         hp_length = int((self.hp / self.max_hp) * self.hp_bar_length)
 
         # Rysuj pasek HP
-        if self.hp <= 0.80* self.max_hp:
+        if self.hp <= 0.30* self.max_hp:
             pygame.draw.rect(self.game.screen, (255,0,0), (10, 10, hp_length, 30))
         else:
             pygame.draw.rect(self.game.screen, self.hp_color, (10, 10, hp_length, 30))
@@ -162,16 +157,16 @@ class Player(pygame.sprite.Sprite):
     def movement(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
-            self.x_change -= PLAYER_SPEED
+            self.x_change -= self.PLAYER_SPEED
             self.facing = 'left'
         if keys[pygame.K_RIGHT]:
-            self.x_change += PLAYER_SPEED
+            self.x_change += self.PLAYER_SPEED
             self.facing = 'right'
         if keys[pygame.K_UP]:
-            self.y_change -= PLAYER_SPEED
+            self.y_change -= self.PLAYER_SPEED
             self.facing = 'up'
         if keys[pygame.K_DOWN]:
-            self.y_change += PLAYER_SPEED
+            self.y_change += self.PLAYER_SPEED
             self.facing = 'down'
     def animate(self):
         now = pygame.time.get_ticks()
@@ -213,6 +208,7 @@ class Enemy(pygame.sprite.Sprite):
         self.movement_loop =0
 
         self.hp = 50
+        self.speed = 1
 
         self.x = x* TILESIZE
         self.y = y* TILESIZE
@@ -220,18 +216,30 @@ class Enemy(pygame.sprite.Sprite):
         self.height = TILESIZE
 
         self.image = self.game.enemies_spritesheet.get_sprite(2,3+128,self.width,self.height)
+
+        self.immunity_timer = 0 
         
 
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
     def take_damage(self, damage):
-        self.hp -= damage
-        if self.hp <= 0:
-            # Wrogi zostaje zabity, możesz dodać dodatkowe operacje, jeśli to konieczne
-            self.kill()
+        if self.immunity_timer <= 0:
+            self.hp -= damage
+            if self.hp <= 0:
+                self.kill()
+            else:
+                self.start_immunity(5*5) 
+
+    def start_immunity(self, duration):
+        self.immunity_timer = duration
+
+
+    
     
     def update(self):
+
+        
         self.movement()
         self.rect.x += self.x_change
         self.collide_blocks('x')
@@ -239,33 +247,43 @@ class Enemy(pygame.sprite.Sprite):
         self.collide_blocks('y')
         self.x_change = 0 
         self.y_change = 0
+        if self.immunity_timer > 0:
+            self.immunity_timer -= 1
         pass
+   
     def movement(self):
-        
-        if self.facing =='left':
-            self.x_change-=ENEMY_SPEED
-            self.movement_loop -=1
-            if self.movement_loop <= -self.max_travel:
-                self.facing = random.choice(['right','up','down'])
-                self.movement_loop =0
-        if self.facing =='right':
-            self.x_change+=ENEMY_SPEED
-            self.movement_loop -=1
-            if self.movement_loop <= -self.max_travel:
-                self.facing = random.choice(['left','up','down'])
-                self.movement_loop =0
-        if self.facing =='up':
-            self.y_change-=ENEMY_SPEED
-            self.movement_loop -=1
-            if self.movement_loop <= -self.max_travel:
-                self.facing = random.choice(['left','right','down'])
-                self.movement_loop =0
-        if self.facing =='down':
-            self.y_change+=ENEMY_SPEED
-            self.movement_loop -=1
-            if self.movement_loop <= -self.max_travel:
-                self.facing = random.choice(['left','up','right'])
-                self.movement_loop =0
+        player = self.game.player
+        distance_to_player = math.sqrt((self.rect.x - player.rect.x)**2 + (self.rect.y - player.rect.y)**2)
+
+        if distance_to_player <= 5 * TILESIZE:
+            angle = math.atan2(player.rect.y - self.rect.y, player.rect.x - self.rect.x)
+            self.x_change = self.speed * math.cos(angle)
+            self.y_change = self.speed * math.sin(angle)
+        else:
+            if self.facing == 'left':
+                self.x_change -= self.speed
+                self.movement_loop -= 1
+                if self.movement_loop <= -self.max_travel:
+                    self.facing = random.choice(['right', 'up', 'down'])
+                    self.movement_loop = 0
+            if self.facing == 'right':
+                self.x_change += self.speed
+                self.movement_loop -= 1
+                if self.movement_loop <= -self.max_travel:
+                    self.facing = random.choice(['left', 'up', 'down'])
+                    self.movement_loop = 0
+            if self.facing == 'up':
+                self.y_change -= self.speed
+                self.movement_loop -= 1
+                if self.movement_loop <= -self.max_travel:
+                    self.facing = random.choice(['left', 'right', 'down'])
+                    self.movement_loop = 0
+            if self.facing == 'down':
+                self.y_change += self.speed
+                self.movement_loop -= 1
+                if self.movement_loop <= -self.max_travel:
+                    self.facing = random.choice(['left', 'up', 'right'])
+                    self.movement_loop = 0
         
     def collide_blocks(self, direction):
         if direction =='x':
@@ -285,12 +303,12 @@ class Enemy(pygame.sprite.Sprite):
                     
                 if self.y_change<0:
                     self.rect.y = hits[0].rect.bottom
-                    
+
 class NPC(pygame.sprite.Sprite):
     def __init__(self, game,x,y):
         self.game = game
         self._layer = ENEMY_LAYER
-        self.groups = self.game.all_sprites,self.game.enemies
+        self.groups = self.game.all_sprites,self.game.npcs
         pygame.sprite.Sprite.__init__(self,self.groups)
 
         self.x_change = 0
@@ -328,8 +346,8 @@ class Attack(pygame.sprite.Sprite):
         self.width = TILESIZE
         self.height = TILESIZE
 
-        self._layer = PLAYER_LAYER
-        self.groups = self.game.all_sprites, self.game.attacks
+        self._layer = PLAYER_LAYER+1
+        self.groups = self.game.attacks,self.game.all_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.animation_loop = 0
         self.image = self.game.attack_spritesheet.get_sprite(0, 0, self.width, self.height)
@@ -337,6 +355,7 @@ class Attack(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
+        print("Groups in Attack:", self.groups)
 
     def update(self):
         self.animate()
@@ -346,9 +365,11 @@ class Attack(pygame.sprite.Sprite):
         hits = pygame.sprite.spritecollide(self, self.game.enemies, False)
         for enemy in hits:
             enemy.take_damage(10)  # Przekaż funkcję zadawania obrażeń do wrogów
-
+            print(f'{enemy.hp}')
+        
         # Usuń atak po zetknięciu z wrogami
-        self.kill()
+        
+        
 
 
     def animate(self):
@@ -377,21 +398,21 @@ class Attack(pygame.sprite.Sprite):
                             self.game.attack_spritesheet.get_sprite(96, 0, self.width, self.height),
                             self.game.attack_spritesheet.get_sprite(128, 0, self.width, self.height)]
 
+        frame_index = int(self.animation_loop)  # Użyj int() do indeksacji
         if direction == 'up':
-            self.image = up_animations[math.floor(self.animation_loop)]
+            self.image = up_animations[frame_index]
         elif direction == 'down':
-            self.image = down_animations[math.floor(self.animation_loop)]
+            self.image = down_animations[frame_index]
         elif direction == 'left':
-            self.image = left_animations[math.floor(self.animation_loop)]
+            self.image = left_animations[frame_index]
         elif direction == 'right':
-            self.image = right_animations[math.floor(self.animation_loop)]
+            self.image = right_animations[frame_index]
 
-        self.animation_loop += 0.2  # Zmniejsz szybkość animacji do wartości 0.2
+        self.animation_loop += 1/5
 
         if self.animation_loop >= 5:
-            self.animation_loop = 0  # Zrestartuj animację, gdy dojdzie do końca
-            self.kill()  # Zabij obiekt tylko po zakończeniu animacji
 
+            self.kill()
 
 class Block(pygame.sprite.Sprite):
     def __init__(self,game,x,y):

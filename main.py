@@ -3,6 +3,9 @@ import sys
 from scripts.config import *
 from scripts.sprites import *
 from scripts.inventory import *
+from scripts.EnemySpawner import *
+from scripts.game_over_screen import *
+from scripts.start_menu import *
 
 class Game:
     def __init__(self):
@@ -25,18 +28,18 @@ class Game:
         self.is_mouse_dragging = False
 
 
-        rusted_sword = Weapon("Custom Weapon")
-        rusted_sword.set_image("assets\img\\rust_sword.png")
+        rusted_sword = Weapon("Rusted sword",5,0)
+        rusted_sword.set_image("assets/img/rust_sword.png")
 
-        self.inventory.add_item(rusted_sword, 1)  # Add the test weapon to the second slot
-        rusted_sword.set_position(
-        INVENTORY_X + (1 % INVENTORY_WIDTH) * SLOT_SIZE,
-        INVENTORY_Y + (1 // INVENTORY_WIDTH) * SLOT_SIZE)
+        self.inventory.add_item(rusted_sword)  # Add the test weapon to the second slot
+
 
         self.character_spritesheet = Spritesheet('assets/img/character.png')
         self.enemies_spritesheet = Spritesheet('assets/img/enemy2.png')
         self.terrain_spritesheet = Spritesheet('assets/img/terrain.png')
         self.attack_spritesheet = Spritesheet('assets/img/attack.png')
+        self.rats_spritesheet = Spritesheet('assets/img/rats.png')
+        self.wildboar_spritesheet = Spritesheet('assets/img/wildboar.png')
         self.font = pygame.font.Font(None, 36)
         self.screen = pygame.display.set_mode((self.WIN_WIDTH, self.WIN_HEIGHT))
         self.clock = pygame.time.Clock()
@@ -66,7 +69,7 @@ class Game:
                     self.camera = Camera(self, self.player)
                     Ground(self, j, i)
                 elif column == "E":
-                    Enemy(self, j, i)
+                    WildBoar(self, j, i)
                     Ground(self, j, i)
                 elif column == "N":
                     NPC(self, j, i)
@@ -99,6 +102,7 @@ class Game:
         self.all_sprites = pygame.sprite.LayeredUpdates()
         self.blocks = pygame.sprite.LayeredUpdates()
         self.enemies = pygame.sprite.LayeredUpdates()
+        self.npcs = pygame.sprite.LayeredUpdates()
         self.attacks = pygame.sprite.LayeredUpdates()
 
         self.createTilemap()
@@ -112,22 +116,14 @@ class Game:
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_SPACE:
                     if self.player.facing == 'up':
-                        a=Attack(self, self.player.rect.x ,self.player.rect.y-TILESIZE )
-                        print(f"{a.rect = }")                        
-                        print(f"{self.player.rect = }")              
+                        self.attack0 = Attack(self, self.player.rect.x ,self.player.rect.y-TILESIZE )
                     if self.player.facing == 'down':
-                        a=Attack(self, self.player.rect.x ,self.player.rect.y+TILESIZE )
-                        print(f"{a.rect = }")                        
-                        print(f"{self.player.rect = }")              
+                        self.attack0 = Attack(self, self.player.rect.x ,self.player.rect.y+TILESIZE )
                     if self.player.facing == 'left':
-                        a=Attack(self, self.player.rect.x - TILESIZE ,self.player.rect.y)
-                        print(f"{a.rect = }")                        
-                        print(f"{self.player.rect = }")              
+                        self.attack0 = Attack(self, self.player.rect.x - TILESIZE ,self.player.rect.y)
                     if self.player.facing == 'right':
-                        a=Attack(self, self.player.rect.x +TILESIZE,self.player.rect.y-TILESIZE )
-                        print(f"{a.rect = }")                        
-                        print(f"{self.player.rect = }")                        
-
+                        self.attack0 = Attack(self, self.player.rect.x +TILESIZE,self.player.rect.y)
+                                
                         
 
            # Dodaj obsługę klawisza "I" dla otwierania inwentarza
@@ -143,7 +139,7 @@ class Game:
 
     def update(self):
         self.all_sprites.update()
-        self.attacks.draw(self.screen) 
+        
         pygame.display.update()
 
     def test_add_items(self,event):
@@ -160,7 +156,13 @@ class Game:
         self.camera.update(self.player)
         for sprite in self.all_sprites:
             self.screen.blit(sprite.image, self.camera.apply(sprite))
+        
+        self.attacks.draw(self.screen)
+        
 
+
+        
+        self.player.draw_health_bar()
 
         if self.inventory_open:
             self.inventory.draw_inventory()
@@ -182,11 +184,24 @@ class Game:
         self.running = False
 
     def game_over(self):
+        game_over_screen = GameOverScreen(self.WIN_WIDTH, self.WIN_HEIGHT)
+        game_over_screen.show()
         pass
+    def intro_screen(self):  
+        start_menu = StartMenu (self.WIN_WIDTH, self.WIN_HEIGHT)
+        choice = start_menu.show()
 
-    def intro_screen(self):
-        pass
-
+        if choice == "start":
+            self.new()
+            while self.running:
+                self.main()
+                self.game_over()
+        elif choice == "load":
+            # Dodaj logikę wczytywania gry
+            pass
+        elif choice == "quit":
+            pygame.quit()
+            sys.exit()
 
 g = Game()
 g.intro_screen()

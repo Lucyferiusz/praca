@@ -9,8 +9,8 @@ GRAY = (169, 169, 169)
 
 SLOT_SIZE = 50
 ITEM_SIZE = 40
-INVENTORY_WIDTH = 3
-INVENTORY_HEIGHT = 4
+INVENTORY_WIDTH = 10
+INVENTORY_HEIGHT = 5
 INVENTORY_SIZE = INVENTORY_WIDTH * INVENTORY_HEIGHT
 INVENTORY_X = 200
 INVENTORY_Y = 300
@@ -51,6 +51,15 @@ class Item:
     def set_equipped_position(self, x, y, size):
         self.rect.x = x
         self.rect.y = y
+    def render_message(self, game, message):
+        font = pygame.font.Font(None, 36)  # Ustaw rozmiar czcionki
+        text = font.render(message, True, (0, 0, 25))  # Biały tekst na czarnym tle
+        text_rect = text.get_rect(center=(game.WIN_WIDTH // 2, game.WIN_HEIGHT // 2))  # Ustaw tekst na środku ekranu
+        game.screen.blit(text, text_rect)
+        pygame.display.flip()
+        pygame.time.delay(1000)  # Wyświetl komunikat przez 2 sekundy
+
+        # Tutaj możesz dodać kod do dalszej obsługi (np. zmiana stanu gry, aktualizacja gracza itp.)
 
 class Armor(Item):
     def __init__(self, name):
@@ -74,9 +83,11 @@ class Armor(Item):
         self.image.set_colorkey((0, 0, 0))
 
 class Weapon(Item):
-    def __init__(self, name):
+    def __init__(self, name ,dmg,crt):
         super().__init__(name, (255, 255, 0))
         self.equipped = False
+        self.dmg = dmg
+        self.crt = crt
 
     def equip(self):
         if not self.equipped:
@@ -105,8 +116,8 @@ class Potion(Item):
 
     def drink(self):
         if not self.equipped:
-            print(f"Wypiłeś: {self.name} uleczono {self.healing} HP")
-            self.equipped = True
+            return (f"Wypiłeś: {self.name} uleczono {self.healing} HP")
+            
 
     def set_equipped_position(self):
         super().set_position(*calculate_weapon_slot_position()[:2])
@@ -134,7 +145,7 @@ class Inventory:
             self.add_item(armor)
         elif item_type == 3:
             # Dodaj weapon
-            weapon = Weapon("Test Weapon")
+            weapon = Weapon("Test Weapon",1,0)
             self.add_item(weapon)
             
     def add_item(self, item, slot=None):
@@ -201,6 +212,16 @@ class Inventory:
                         self.context_menu_active = False
                     elif selected_option == "Drink" and isinstance(selected_item, Potion):
                         selected_item.drink()
+                        if self.game.player.hp == self.game.player.max_hp:
+                            pass
+                        else:
+                            self.remove_item(selected_item.slot)
+                            if not self.game.player.invulnerable:  # Sprawdź, czy gracz nie jest nietykalny
+                                self.game.player.hp += 10
+                                self.game.player.invulnerable = True  # Ustaw nietykalność po otrzymaniu obrażeń
+                                self.game.player.invulnerable_timer = pygame.time.get_ticks()
+                                selected_item.render_message(self.game,selected_item.drink())
+
                         self.context_menu_active = False
                     elif selected_option == "Equip" and isinstance(selected_item, (Weapon, Armor)):
                         self.equip_item()

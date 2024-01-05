@@ -143,7 +143,7 @@ lether_armor = Armor("Custom Armor")
 
 # Przykład użycia dla Weapon
 rusted_sword = Weapon("Custom Weapon")
-rusted_sword.set_image("assets\img\\rust_sword.png")
+rusted_sword.set_image("assets/img/ust_sword.png")
 
 
 
