@@ -40,12 +40,12 @@ class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         self.game = game
         self._layer = PLAYER_LAYER
-        self.groups = self.game.all_sprites
+        self.groups = self.game.all_sprites,self.game.player_group
         pygame.sprite.Sprite.__init__(self, self.groups)
 
         self.hp = 100  # Początkowa wartość HP
         self.attack = 5 # Początkowa wartość ataku
-        self.armor = 0 # Początkowa wartość zbroji
+        self.armor = 100 # Początkowa wartość zbroji
         self.immunity_timer = 0
 
 
@@ -90,8 +90,10 @@ class Player(pygame.sprite.Sprite):
 
         self.image = self.frames[self.facing][self.frame_index]
         
-
         self.rect = self.image.get_rect()
+
+        self.rect.height*=0.95
+        self.rect.width*=0.95
         self.rect.x = self.x
         self.rect.y = self.y
 
@@ -104,11 +106,19 @@ class Player(pygame.sprite.Sprite):
     
     def take_damage(self, damage):
         if self.immunity_timer <= 0:
-            self.hp -= damage
-            if self.hp <= 0:
-                self.game.game_over()  # Zakończ grę, gdy punkty życia gracza spadną do zera
+            if self.armor <damage:
+                self.hp -= (damage- self.armor)
+                if self.hp <= 0:
+                    self.game.game_over()  # Zakończ grę, gdy punkty życia gracza spadną do zera
+                else:
+                    self.start_immunity(5 * 5)
             else:
-                self.start_immunity(5 * 5)
+                self.hp -= 1
+                if self.hp <= 0:
+                    self.game.game_over()  # Zakończ grę, gdy punkty życia gracza spadną do zera
+                else:
+                    self.start_immunity(5 * 5)
+
 
     def start_immunity(self, duration):
         self.immunity_timer = duration
@@ -129,7 +139,6 @@ class Player(pygame.sprite.Sprite):
         if self.immunity_timer > 0:
             self.immunity_timer -= 1
 
-
     def handle_invulnerability(self):
         if self.invulnerable:
             now = pygame.time.get_ticks()
@@ -147,13 +156,20 @@ class Player(pygame.sprite.Sprite):
         hp_length = int((self.hp / self.max_hp) * self.hp_bar_length)
 
         # Rysuj pasek HP
-        if self.hp <= 0.30* self.max_hp:
-            pygame.draw.rect(self.game.screen, (255,0,0), (10, 10, hp_length, 30))
+        if self.hp <= 0.30 * self.max_hp:
+            pygame.draw.rect(self.game.screen, (255, 0, 0), (10, 10, hp_length, 30))
         else:
             pygame.draw.rect(self.game.screen, self.hp_color, (10, 10, hp_length, 30))
 
         # Rysuj ramkę paska HP
         pygame.draw.rect(self.game.screen, (255, 255, 255), (10, 10, self.hp_bar_length, 30), 2)
+
+        # Dodaj tekst z aktualnym i maksymalnym HP na środku paska
+        font = pygame.font.Font(None, 24)
+        hp_text = f"{self.hp}/{self.max_hp}"
+        text_surface = font.render(hp_text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=(10 + self.hp_bar_length / 2, 10 + 30 / 2))
+        self.game.screen.blit(text_surface, text_rect)
     def movement(self):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
@@ -193,117 +209,6 @@ class Player(pygame.sprite.Sprite):
 
 
 
-
-class Enemy(pygame.sprite.Sprite):
-    def __init__(self, game,x,y):
-        self.game = game
-        self._layer = ENEMY_LAYER
-        self.groups = self.game.all_sprites,self.game.enemies
-        pygame.sprite.Sprite.__init__(self,self.groups)
-
-        self.x_change = 0
-        self.y_change = 0
-        self.facing = random.choice(['left','right','up'])
-        self.max_travel = random.randint(3*TILESIZE,5*TILESIZE)
-        self.movement_loop =0
-
-        self.hp = 50
-        self.speed = 1
-
-        self.x = x* TILESIZE
-        self.y = y* TILESIZE
-        self.width = TILESIZE
-        self.height = TILESIZE
-
-        self.image = self.game.enemies_spritesheet.get_sprite(2,3+128,self.width,self.height)
-
-        self.immunity_timer = 0 
-        
-
-        self.rect = self.image.get_rect()
-        self.rect.x = self.x
-        self.rect.y = self.y
-    def take_damage(self, damage):
-        if self.immunity_timer <= 0:
-            self.hp -= damage
-            if self.hp <= 0:
-                self.kill()
-            else:
-                self.start_immunity(5*5) 
-
-    def start_immunity(self, duration):
-        self.immunity_timer = duration
-
-
-    
-    
-    def update(self):
-
-        
-        self.movement()
-        self.rect.x += self.x_change
-        self.collide_blocks('x')
-        self.rect.y += self.y_change
-        self.collide_blocks('y')
-        self.x_change = 0 
-        self.y_change = 0
-        if self.immunity_timer > 0:
-            self.immunity_timer -= 1
-        pass
-   
-    def movement(self):
-        player = self.game.player
-        distance_to_player = math.sqrt((self.rect.x - player.rect.x)**2 + (self.rect.y - player.rect.y)**2)
-
-        if distance_to_player <= 5 * TILESIZE:
-            angle = math.atan2(player.rect.y - self.rect.y, player.rect.x - self.rect.x)
-            self.x_change = self.speed * math.cos(angle)
-            self.y_change = self.speed * math.sin(angle)
-        else:
-            if self.facing == 'left':
-                self.x_change -= self.speed
-                self.movement_loop -= 1
-                if self.movement_loop <= -self.max_travel:
-                    self.facing = random.choice(['right', 'up', 'down'])
-                    self.movement_loop = 0
-            if self.facing == 'right':
-                self.x_change += self.speed
-                self.movement_loop -= 1
-                if self.movement_loop <= -self.max_travel:
-                    self.facing = random.choice(['left', 'up', 'down'])
-                    self.movement_loop = 0
-            if self.facing == 'up':
-                self.y_change -= self.speed
-                self.movement_loop -= 1
-                if self.movement_loop <= -self.max_travel:
-                    self.facing = random.choice(['left', 'right', 'down'])
-                    self.movement_loop = 0
-            if self.facing == 'down':
-                self.y_change += self.speed
-                self.movement_loop -= 1
-                if self.movement_loop <= -self.max_travel:
-                    self.facing = random.choice(['left', 'up', 'right'])
-                    self.movement_loop = 0
-        
-    def collide_blocks(self, direction):
-        if direction =='x':
-            hits = pygame.sprite.spritecollide(self,self.game.blocks,False)
-            if hits:
-                if self.x_change>0:
-                    self.rect.x = hits[0].rect.left - self.rect.width
-                    
-                if self.x_change<0:
-                    self.rect.x = hits[0].rect.right
-                    
-        if direction =='y':
-            hits = pygame.sprite.spritecollide(self,self.game.blocks,False)
-            if hits:
-                if self.y_change>0:
-                    self.rect.y = hits[0].rect.top - self.rect.height
-                    
-                if self.y_change<0:
-                    self.rect.y = hits[0].rect.bottom
-
 class NPC(pygame.sprite.Sprite):
     def __init__(self, game,x,y):
         self.game = game
@@ -315,13 +220,20 @@ class NPC(pygame.sprite.Sprite):
         self.y_change = 0
         self.facing = random.choice(['left','right','up'])
         self.movement_loop =0
-
+        
+        self.name = "Bob"#name
+        self.dialogue = "TEST"#dialogue
+        self.talkable = False
         
 
         self.x = x* TILESIZE
         self.y = y* TILESIZE
         self.width = TILESIZE
         self.height = TILESIZE
+
+        self.image_npc = self.game.enemies_spritesheet.get_sprite(2, 3, self.width, self.height)
+        self.image_question_mark = pygame.Surface((TILESIZE, TILESIZE), pygame.SRCALPHA)
+        self.image_question_mark.blit(self.game.question_mark_image, (0, 0))
 
         self.image = self.game.enemies_spritesheet.get_sprite(2,3,self.width,self.height)
         
@@ -330,10 +242,42 @@ class NPC(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
     def update(self):
-        
         self.rect.x += self.x_change
         self.rect.y += self.y_change
-        pass
+
+        # Sprawdź, czy gracz jest wystarczająco blisko, aby rozmawiać
+        player = self.game.player
+        distance_to_player = pygame.math.Vector2(player.rect.centerx - self.rect.centerx,
+                                                 player.rect.centery - self.rect.centery).length()
+
+        if distance_to_player <= 2*TILESIZE:
+            self.talkable = True
+        else:
+            self.talkable = False
+
+        # Aktualizuj obraz NPC w zależności od tego, czy jest rozmowny
+        if self.talkable:
+            self.image = self.image_question_mark
+        else:
+            self.image = self.image_npc
+    def initiate_dialogue(self):
+        # Funkcja do rozpoczęcia dialogu
+        if self.talkable:
+            # Stwórz nową powierzchnię na tekst
+            dialogue_surface = pygame.Surface((400, 200), pygame.SRCALPHA)
+            pygame.draw.rect(dialogue_surface, (0, 0, 0, 128), dialogue_surface.get_rect())  # Czarny prostokąt z przezroczystością
+
+            # Dodaj tekst do powierzchni
+            font = pygame.font.Font(None, 36)
+            text = font.render(f"Rozpoczęto dialog z NPC: {self.name}", True, (255, 255, 255))
+            dialogue_surface.blit(text, (20, 20))
+
+            # Wyświetl powierzchnię z tekstem
+            self.game.screen.blit(dialogue_surface, (100, 100))
+            pygame.display.flip()
+
+            # Oczekaj na zamknięcie okna dialogowego (możesz dodać tu obsługę klawiszy)
+            pygame.time.wait(3000)  # 3000 milisekund (3 sekundy)
 
 import pygame
 import math
@@ -355,7 +299,7 @@ class Attack(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
-        print("Groups in Attack:", self.groups)
+        
 
     def update(self):
         self.animate()
@@ -365,7 +309,6 @@ class Attack(pygame.sprite.Sprite):
         hits = pygame.sprite.spritecollide(self, self.game.enemies, False)
         for enemy in hits:
             enemy.take_damage(10)  # Przekaż funkcję zadawania obrażeń do wrogów
-            print(f'{enemy.hp}')
         
         # Usuń atak po zetknięciu z wrogami
         

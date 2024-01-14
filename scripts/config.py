@@ -21,5 +21,3 @@ map_01 = MAP_01
 map_width = len(MAP_01[0])
 map_height = len(MAP_01)
 total_tiles = map_width * map_height
-
-print(f"{map_width=} {map_height=}")

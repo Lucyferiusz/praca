@@ -225,6 +225,7 @@ class Inventory:
                         self.context_menu_active = False
                     elif selected_option == "Equip" and isinstance(selected_item, (Weapon, Armor)):
                         self.equip_item()
+                        self.remove_item(self.original_slot)
                         
                         self.context_menu_active = False
                     elif selected_option == "Unequip" and isinstance(selected_item, (Weapon, Armor)):
@@ -245,6 +246,15 @@ class Inventory:
                 item = self.slots[row * INVENTORY_WIDTH + col]
                 if item and item != self.dragging_item:  # Draw only non-dragging items
                     self.screen.blit(item.image, item.rect.topleft)
+                    
+        
+        item = self.slots[-1]
+        if item:
+            self.screen.blit(item.image, item.rect.topleft)
+
+        item = self.slots[-2]
+        if item:
+            self.screen.blit(item.image, item.rect.topleft)
 
         # Draw the dragging item last
         if self.dragging_item:
@@ -334,15 +344,15 @@ class Inventory:
                     if isinstance(self.dragging_item, Armor) and self.ARMOR_SLOT_RECT.collidepoint(pygame.mouse.get_pos()):
                             self.add_item(self.dragging_item, INVENTORY_SIZE)
                             self.dragging_item.set_equipped_position()
-                    elif isinstance(self.dragging_item, Weapon) and self.WEAPON_SLOT_RECT.collidepoint(pygame.mouse.get_pos()):
+                    if isinstance(self.dragging_item, Weapon) and self.WEAPON_SLOT_RECT.collidepoint(pygame.mouse.get_pos()):
                             self.add_item(self.dragging_item, INVENTORY_SIZE + 1)
                             self.dragging_item.set_equipped_position()
                             self.dragging_item.equip()
                             self.dragging_item = self.remove_item(self.original_slot)
 
-                    elif self.DEL_RECT.collidepoint(pygame.mouse.get_pos()):
+                    if self.DEL_RECT.collidepoint(pygame.mouse.get_pos()):
                         self.remove_item(self.original_slot)
-                    elif self.add_item(self.dragging_item, slot_index) is False:
+                    if self.add_item(self.dragging_item, slot_index) is False:
                         self.add_item(self.dragging_item, self.original_slot)
                             
 
@@ -375,8 +385,7 @@ class Inventory:
                 self.selected_item_for_context_menu.equip()
                 self.add_item(self.selected_item_for_context_menu, weapon_slot_index)
                 self.selected_item_for_context_menu.set_equipped_position()
-                print(f"{self.original_slot = } removved" )
-                self.remove_item(self.original_slot)
+
     
     def unequip_item(self):
         if isinstance(self.selected_item_for_context_menu, Weapon) and self.selected_item_for_context_menu.equipped:

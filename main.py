@@ -40,6 +40,10 @@ class Game:
         self.attack_spritesheet = Spritesheet('assets/img/attack.png')
         self.rats_spritesheet = Spritesheet('assets/img/rats.png')
         self.wildboar_spritesheet = Spritesheet('assets/img/wildboar.png')
+
+        self.question_mark_image = pygame.image.load('assets/img/rat.png')
+        self.dt = 0
+
         self.font = pygame.font.Font(None, 36)
         self.screen = pygame.display.set_mode((self.WIN_WIDTH, self.WIN_HEIGHT))
         self.clock = pygame.time.Clock()
@@ -68,8 +72,8 @@ class Game:
                     self.player = Player(self, j, i)
                     self.camera = Camera(self, self.player)
                     Ground(self, j, i)
-                elif column == "E":
-                    WildBoar(self, j, i)
+                elif column == "D":
+                    EnemySpawner(self,j,i,10*FPS,5,WildBoar)
                     Ground(self, j, i)
                 elif column == "N":
                     NPC(self, j, i)
@@ -94,6 +98,13 @@ class Game:
                 elif column == 'h':
                     Ground(self, j, i)
                     NPC(self, j, i)
+                elif column =='R':
+                    # EnemySpawner(self,j,i,FPS*1,1,Rat)
+                    EnemySpawnerPack(self,j,i,FPS*5,4)
+                    Ground(self, j, i)
+                elif column =='a':
+                    Archer(self,j,i)
+                    Ground(self, j, i)
                 else:
                     Ground(self, j, i)
 
@@ -104,6 +115,8 @@ class Game:
         self.enemies = pygame.sprite.LayeredUpdates()
         self.npcs = pygame.sprite.LayeredUpdates()
         self.attacks = pygame.sprite.LayeredUpdates()
+        self.enemies_attacks = pygame.sprite.LayeredUpdates()
+        self.player_group = pygame.sprite.LayeredUpdates()
 
         self.createTilemap()
 
@@ -133,13 +146,16 @@ class Game:
 
                     if self.inventory_open:
                         self.inventory.draw_inventory()
+
+                if event.key == pygame.K_e:
+                    self.check_interactions()
                 
             self.inventory.handle_events(event)
             self.test_add_items(event)
 
     def update(self):
         self.all_sprites.update()
-        
+                
         pygame.display.update()
 
     def test_add_items(self,event):
@@ -151,6 +167,11 @@ class Game:
             if event.key == pygame.K_3:
                 self.inventory.add_test_items(3)
 
+    def check_interactions(self):
+        for npc in pygame.sprite.spritecollide(self.player, self.npcs, False):
+            if npc.talkable:
+                npc.initiate_dialogue()
+
 
     def draw(self):
         self.camera.update(self.player)
@@ -158,10 +179,6 @@ class Game:
             self.screen.blit(sprite.image, self.camera.apply(sprite))
         
         self.attacks.draw(self.screen)
-        
-
-
-        
         self.player.draw_health_bar()
 
         if self.inventory_open:
@@ -172,7 +189,6 @@ class Game:
                     pygame.mouse.get_pos()[0] + dragging_offset[0],
                     pygame.mouse.get_pos()[1] + dragging_offset[1]
                 )
-                    
         pygame.display.flip()
         self.clock.tick(FPS)
 
