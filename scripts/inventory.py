@@ -36,6 +36,15 @@ def calculate_weapon_slot_position():
     weapon_slot_y = INVENTORY_Y
     return weapon_slot_x, weapon_slot_y, pygame.Rect(weapon_slot_x, weapon_slot_y, WEAPON_SLOT_SIZE, WEAPON_SLOT_SIZE)
 
+def calculate_gold_display_position():
+        
+        armor_slot_x , armor_slot_y, _ = calculate_armor_slot_position()
+        padding = 10
+        x = armor_slot_x + padding  # Przesunięcie od prawej krawędzi
+        y = armor_slot_y + 60 + padding  # Przesunięcie od dolnej krawędzi
+
+        return x, y
+
 class Item:
     def __init__(self, name, image_color):
         self.name = name
@@ -51,25 +60,18 @@ class Item:
     def set_equipped_position(self, x, y, size):
         self.rect.x = x
         self.rect.y = y
-    def render_message(self, game, message):
-        font = pygame.font.Font(None, 36)  # Ustaw rozmiar czcionki
-        text = font.render(message, True, (0, 0, 25))  # Biały tekst na czarnym tle
-        text_rect = text.get_rect(center=(game.WIN_WIDTH // 2, game.WIN_HEIGHT // 2))  # Ustaw tekst na środku ekranu
-        game.screen.blit(text, text_rect)
-        pygame.display.flip()
-        pygame.time.delay(1000)  # Wyświetl komunikat przez 2 sekundy
-
-        # Tutaj możesz dodać kod do dalszej obsługi (np. zmiana stanu gry, aktualizacja gracza itp.)
 
 class Armor(Item):
-    def __init__(self, name):
+    def __init__(self, name,armor):
         super().__init__(name, (0, 0, 255))
         self.equipped = False
+        self.armor = armor
 
     def wear(self):
         if not self.equipped:
             print(f"Wearing armor: {self.name}")
             self.equipped = True
+            
         else:
             print(f"Removing armor: {self.name}")
             self.equipped = False
@@ -83,11 +85,11 @@ class Armor(Item):
         self.image.set_colorkey((0, 0, 0))
 
 class Weapon(Item):
-    def __init__(self, name ,dmg,crt):
+    def __init__(self, name ,dmg):
         super().__init__(name, (255, 255, 0))
         self.equipped = False
         self.dmg = dmg
-        self.crt = crt
+        self.crt = 0
 
     def equip(self):
         if not self.equipped:
@@ -114,13 +116,28 @@ class Potion(Item):
         self.image = pygame.transform.scale(original_image, (ITEM_SIZE, ITEM_SIZE))
         self.image.set_colorkey((0, 0, 0))
 
-    def drink(self):
+class Tool(Item):
+    def __init__(self, name ,dmg):
+        super().__init__(name, (255, 25, 125))
+        self.equipped = False
+        self.dmg = dmg
+        self.crt = 0
+
+    def equip(self):
         if not self.equipped:
-            return (f"Wypiłeś: {self.name} uleczono {self.healing} HP")
-            
+            print(f"Equipping tool: {self.name}")
+            self.equipped = True
+        else:
+            print(f"Unequipping tool: {self.name}")
+            self.equipped = False
 
     def set_equipped_position(self):
         super().set_position(*calculate_weapon_slot_position()[:2])
+
+    def set_image(self, image_path):
+        original_image = pygame.image.load(image_path).convert_alpha()
+        self.image = pygame.transform.scale(original_image, (ITEM_SIZE, ITEM_SIZE))
+        self.image.set_colorkey((0, 0, 0))
 
 class Inventory:
     def __init__(self, screen,game):
@@ -132,6 +149,18 @@ class Inventory:
         _,_,self.WEAPON_SLOT_RECT = calculate_weapon_slot_position()
         _,_,self.ARMOR_SLOT_RECT = calculate_armor_slot_position()
         self.DEL_RECT = pygame.Rect(DEL_SLOT_X, DEL_SLOT_Y, SLOT_SIZE, SLOT_SIZE)
+        self.GOLD_DISPLAY_X, self.GOLD_DISPLAY_Y  = calculate_gold_display_position()
+
+    def draw_gold(self):
+        font = pygame.font.Font(None, 36)
+        text = font.render(f"Gold: {self.game.player.gold}", True, BLACK)
+        self.screen.blit(text, (self.GOLD_DISPLAY_X, self.GOLD_DISPLAY_Y))
+
+    def add_gold(self, amount):
+        self.gold += amount
+
+    def remove_gold(self, amount):
+        self.gold -= amount if self.gold >= amount else self.gold
     
     
     def add_test_items(self, item_type):
@@ -141,11 +170,11 @@ class Inventory:
             self.add_item(potion)
         elif item_type == 2:
             # Dodaj armor
-            armor = Armor("Test Armor")
+            armor = Armor("Test Armor",5)
             self.add_item(armor)
         elif item_type == 3:
             # Dodaj weapon
-            weapon = Weapon("Test Weapon",1,0)
+            weapon = Tool("Test Weapon",1,0)
             self.add_item(weapon)
             
     def add_item(self, item, slot=None):
@@ -211,16 +240,15 @@ class Inventory:
                         self.remove_item(selected_item.slot)
                         self.context_menu_active = False
                     elif selected_option == "Drink" and isinstance(selected_item, Potion):
-                        selected_item.drink()
                         if self.game.player.hp == self.game.player.max_hp:
                             pass
                         else:
                             self.remove_item(selected_item.slot)
                             if not self.game.player.invulnerable:  # Sprawdź, czy gracz nie jest nietykalny
-                                self.game.player.hp += 10
+                                self.game.player.heal(100)
                                 self.game.player.invulnerable = True  # Ustaw nietykalność po otrzymaniu obrażeń
                                 self.game.player.invulnerable_timer = pygame.time.get_ticks()
-                                selected_item.render_message(self.game,selected_item.drink())
+                                
 
                         self.context_menu_active = False
                     elif selected_option == "Equip" and isinstance(selected_item, (Weapon, Armor)):
@@ -246,15 +274,17 @@ class Inventory:
                 item = self.slots[row * INVENTORY_WIDTH + col]
                 if item and item != self.dragging_item:  # Draw only non-dragging items
                     self.screen.blit(item.image, item.rect.topleft)
+
+        self.draw_gold()
                     
         
         item = self.slots[-1]
         if item:
-            self.screen.blit(item.image, item.rect.topleft)
+            self.screen.blit(item.image, (item.rect.topleft))
 
         item = self.slots[-2]
         if item:
-            self.screen.blit(item.image, item.rect.topleft)
+            self.screen.blit(item.image, (item.rect.topleft))
 
         # Draw the dragging item last
         if self.dragging_item:
@@ -274,7 +304,7 @@ class Inventory:
         self.screen.blit(alpha_surface, (INVENTORY_X - 25, INVENTORY_Y - 25))
 
         alpha_surface_inventory = pygame.Surface((INVENTORY_WIDTH * SLOT_SIZE, INVENTORY_HEIGHT * SLOT_SIZE), pygame.SRCALPHA)
-        alpha_surface_inventory.fill((255, 0, 255, 128))
+        alpha_surface_inventory.fill((130, 130, 130, 128))
         self.screen.blit(alpha_surface_inventory, (INVENTORY_X, INVENTORY_Y))
 
         alpha_surface_armor = pygame.Surface((ARMOR_SLOT_SIZE, ARMOR_SLOT_SIZE), pygame.SRCALPHA)
@@ -306,10 +336,12 @@ class Inventory:
         weapon_item = self.slots[INVENTORY_SIZE + 1]
         if weapon_item:
             self.draw_item(weapon_item , weapon_item.rect.x, weapon_item.rect.y)
+            
 
     def draw_item(self, item, x, y):
         if item:
             self.screen.blit(item.image, (x, y))
+            
 
 
     def handle_events(self, event):
@@ -341,18 +373,10 @@ class Inventory:
                     slot_row = max(0, min(INVENTORY_HEIGHT - 1, (pygame.mouse.get_pos()[1] - INVENTORY_Y) // SLOT_SIZE))
                     slot_index = slot_row * INVENTORY_WIDTH + slot_col
 
-                    if isinstance(self.dragging_item, Armor) and self.ARMOR_SLOT_RECT.collidepoint(pygame.mouse.get_pos()):
-                            self.add_item(self.dragging_item, INVENTORY_SIZE)
-                            self.dragging_item.set_equipped_position()
-                    if isinstance(self.dragging_item, Weapon) and self.WEAPON_SLOT_RECT.collidepoint(pygame.mouse.get_pos()):
-                            self.add_item(self.dragging_item, INVENTORY_SIZE + 1)
-                            self.dragging_item.set_equipped_position()
-                            self.dragging_item.equip()
-                            self.dragging_item = self.remove_item(self.original_slot)
-
+                   
                     if self.DEL_RECT.collidepoint(pygame.mouse.get_pos()):
                         self.remove_item(self.original_slot)
-                    if self.add_item(self.dragging_item, slot_index) is False:
+                    elif self.add_item(self.dragging_item, slot_index) is False:
                         self.add_item(self.dragging_item, self.original_slot)
                             
 
@@ -364,22 +388,36 @@ class Inventory:
             if self.game.is_mouse_dragging:
                 mouse_x, mouse_y = pygame.mouse.get_pos()
                 self.dragging_item.set_position(mouse_x + dragging_offset[0], mouse_y + dragging_offset[1])
-#TODO : przedmot zmika ale jest a jak jest to w 2 miejscajc
-    
+
     def equip_item(self):
         if self.selected_item_for_context_menu:
             
             # Check the type of the item (Armor, Weapon, etc.)
             if isinstance(self.selected_item_for_context_menu, Armor):
+
+                armor_slot_index = INVENTORY_SIZE
+                armor_slot_item = self.slots[armor_slot_index]
+                
+                if armor_slot_item:  # If the weapon slot is occupied, swap items
+                    armor_slot_item.wear()
+                    self.add_item(armor_slot_item)
+                    self.remove_item(armor_slot_index)
+                    self.add_item(self.selected_item_for_context_menu, armor_slot_index)
+                    
+
                 self.selected_item_for_context_menu.wear()
+                self.add_item(self.selected_item_for_context_menu, armor_slot_index)
+                self.selected_item_for_context_menu.set_equipped_position()
             elif isinstance(self.selected_item_for_context_menu, Weapon):
                 
                 weapon_slot_index = INVENTORY_SIZE + 1
                 weapon_slot_item = self.slots[weapon_slot_index]
                 
                 if weapon_slot_item:  # If the weapon slot is occupied, swap items
+                    weapon_slot_item.equip()
+                    self.add_item(weapon_slot_item)
                     self.remove_item(weapon_slot_index)
-                    self.add_item(weapon_slot_item, self.original_slot)
+                    self.add_item(self.selected_item_for_context_menu, weapon_slot_index)
                     
 
                 self.selected_item_for_context_menu.equip()
@@ -390,6 +428,23 @@ class Inventory:
     def unequip_item(self):
         if isinstance(self.selected_item_for_context_menu, Weapon) and self.selected_item_for_context_menu.equipped:
             self.selected_item_for_context_menu.equip()
+            weapon_slot_index = INVENTORY_SIZE + 1
+
+            # Remove the equipped weapon from the weapon slot
+            self.remove_item(self.original_slot)
+
+            # Find the first available slot in the inventory
+            empty_slot = None
+            for i, slot_item in enumerate(self.slots):
+                if i != weapon_slot_index and slot_item is None:
+                    empty_slot = i
+                    break
+
+            if empty_slot is not None:
+                self.add_item(self.selected_item_for_context_menu)
+        if isinstance(self.selected_item_for_context_menu, Armor) and self.selected_item_for_context_menu.equipped:
+            self.selected_item_for_context_menu.wear()
+            self.game.player.armor_update()
             weapon_slot_index = INVENTORY_SIZE + 1
 
             # Remove the equipped weapon from the weapon slot

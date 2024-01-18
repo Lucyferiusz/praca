@@ -3,7 +3,7 @@ import pygame
 from scripts.config import *
 import math
 import random
-
+# Wczytywanie grafiki
 class Spritesheet:
     def __init__(self,file):
         self.sheet = pygame.image.load(file).convert_alpha()
@@ -12,7 +12,7 @@ class Spritesheet:
         sprite.blit(self.sheet,(0,0),(x,y,width,height))
         sprite.set_colorkey(BLACK)
         return sprite
-
+# Kamera
 class Camera:
     def __init__(self, game, target):
         self.game = game
@@ -34,10 +34,10 @@ class Camera:
 
         self.camera = pygame.Rect(x, y, self.game.WIN_WIDTH, self.game.WIN_HEIGHT)
 
-
-
+# Gracz
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
+        self.gold = 100
         self.game = game
         self._layer = PLAYER_LAYER
         self.groups = self.game.all_sprites,self.game.player_group
@@ -45,7 +45,7 @@ class Player(pygame.sprite.Sprite):
 
         self.hp = 100  # Początkowa wartość HP
         self.attack = 5 # Początkowa wartość ataku
-        self.armor = 100 # Początkowa wartość zbroji
+        self.armor = 0 # Początkowa wartość zbroji
         self.immunity_timer = 0
 
 
@@ -60,8 +60,6 @@ class Player(pygame.sprite.Sprite):
         self.inventory = []  # Lista przedmiotów w ekwipunku
 
         self.PLAYER_SPEED = 3
-
-
 
         self.x_change = 0
         self.y_change = 0
@@ -100,10 +98,6 @@ class Player(pygame.sprite.Sprite):
         self.animation_speed = 200
         self.last_update = 0
 
-    
-    def pickup_item(self, item):
-        self.inventory.append(item)
-    
     def take_damage(self, damage):
         if self.immunity_timer <= 0:
             if self.armor <damage:
@@ -118,12 +112,22 @@ class Player(pygame.sprite.Sprite):
                     self.game.game_over()  # Zakończ grę, gdy punkty życia gracza spadną do zera
                 else:
                     self.start_immunity(5 * 5)
-
-
+    def heal(self, health):
+        
+        if self.hp < self.max_hp:
+            if self.hp + health >= self.max_hp:
+                self.hp = self.max_hp
+            else:
+                self.hp += health
+            
     def start_immunity(self, duration):
         self.immunity_timer = duration
         
-
+    def armor_update(self):
+        if self.game.inventory.slots[-2]:
+            self.game.player.armor = self.game.inventory.slots[-2].armor
+        else:
+            self.game.player.armor = 0
     def update(self):
         
         self.movement()
@@ -138,6 +142,7 @@ class Player(pygame.sprite.Sprite):
         self.handle_invulnerability()
         if self.immunity_timer > 0:
             self.immunity_timer -= 1
+        self.armor_update()
 
     def handle_invulnerability(self):
         if self.invulnerable:
@@ -207,81 +212,6 @@ class Player(pygame.sprite.Sprite):
                 if self.y_change<0:
                     self.rect.y = hits[0].rect.bottom
 
-
-
-class NPC(pygame.sprite.Sprite):
-    def __init__(self, game,x,y):
-        self.game = game
-        self._layer = ENEMY_LAYER
-        self.groups = self.game.all_sprites,self.game.npcs
-        pygame.sprite.Sprite.__init__(self,self.groups)
-
-        self.x_change = 0
-        self.y_change = 0
-        self.facing = random.choice(['left','right','up'])
-        self.movement_loop =0
-        
-        self.name = "Bob"#name
-        self.dialogue = "TEST"#dialogue
-        self.talkable = False
-        
-
-        self.x = x* TILESIZE
-        self.y = y* TILESIZE
-        self.width = TILESIZE
-        self.height = TILESIZE
-
-        self.image_npc = self.game.enemies_spritesheet.get_sprite(2, 3, self.width, self.height)
-        self.image_question_mark = pygame.Surface((TILESIZE, TILESIZE), pygame.SRCALPHA)
-        self.image_question_mark.blit(self.game.question_mark_image, (0, 0))
-
-        self.image = self.game.enemies_spritesheet.get_sprite(2,3,self.width,self.height)
-        
-
-        self.rect = self.image.get_rect()
-        self.rect.x = self.x
-        self.rect.y = self.y
-    def update(self):
-        self.rect.x += self.x_change
-        self.rect.y += self.y_change
-
-        # Sprawdź, czy gracz jest wystarczająco blisko, aby rozmawiać
-        player = self.game.player
-        distance_to_player = pygame.math.Vector2(player.rect.centerx - self.rect.centerx,
-                                                 player.rect.centery - self.rect.centery).length()
-
-        if distance_to_player <= 2*TILESIZE:
-            self.talkable = True
-        else:
-            self.talkable = False
-
-        # Aktualizuj obraz NPC w zależności od tego, czy jest rozmowny
-        if self.talkable:
-            self.image = self.image_question_mark
-        else:
-            self.image = self.image_npc
-    def initiate_dialogue(self):
-        # Funkcja do rozpoczęcia dialogu
-        if self.talkable:
-            # Stwórz nową powierzchnię na tekst
-            dialogue_surface = pygame.Surface((400, 200), pygame.SRCALPHA)
-            pygame.draw.rect(dialogue_surface, (0, 0, 0, 128), dialogue_surface.get_rect())  # Czarny prostokąt z przezroczystością
-
-            # Dodaj tekst do powierzchni
-            font = pygame.font.Font(None, 36)
-            text = font.render(f"Rozpoczęto dialog z NPC: {self.name}", True, (255, 255, 255))
-            dialogue_surface.blit(text, (20, 20))
-
-            # Wyświetl powierzchnię z tekstem
-            self.game.screen.blit(dialogue_surface, (100, 100))
-            pygame.display.flip()
-
-            # Oczekaj na zamknięcie okna dialogowego (możesz dodać tu obsługę klawiszy)
-            pygame.time.wait(3000)  # 3000 milisekund (3 sekundy)
-
-import pygame
-import math
-
 class Attack(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
         self.game = game
@@ -300,7 +230,8 @@ class Attack(pygame.sprite.Sprite):
         self.rect.x = self.x
         self.rect.y = self.y
         
-
+    
+        
     def update(self):
         self.animate()
         self.collide()
@@ -308,13 +239,13 @@ class Attack(pygame.sprite.Sprite):
     def collide(self):
         hits = pygame.sprite.spritecollide(self, self.game.enemies, False)
         for enemy in hits:
-            enemy.take_damage(10)  # Przekaż funkcję zadawania obrażeń do wrogów
-        
-        # Usuń atak po zetknięciu z wrogami
-        
-        
+            if self.game.inventory.slots[-1]:
+                damage = self.game.player.attack + self.game.inventory.slots[-1].dmg
+            else:
+                damage = self.game.player.attack
 
-
+            enemy.take_damage(damage)  
+        
     def animate(self):
         direction = self.game.player.facing
         right_animations = [self.game.attack_spritesheet.get_sprite(0, 64, self.width, self.height),
@@ -357,6 +288,7 @@ class Attack(pygame.sprite.Sprite):
 
             self.kill()
 
+# Bloki
 class Block(pygame.sprite.Sprite):
     def __init__(self,game,x,y):
         self.game = game
@@ -422,6 +354,7 @@ class Ground(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x=self.x
         self.rect.y=self.y
+
 class Gate(pygame.sprite.Sprite):
     def __init__(self,game,x,y):
         self.game = game
@@ -440,6 +373,7 @@ class Gate(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x=self.x
         self.rect.y=self.y
+
 class Field(pygame.sprite.Sprite):
     def __init__(self,game,x,y):
         self.game = game
@@ -456,6 +390,7 @@ class Field(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x=self.x
         self.rect.y=self.y
+
 class Bridge(pygame.sprite.Sprite):
     def __init__(self,game,x,y):
         self.game = game

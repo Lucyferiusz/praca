@@ -64,3 +64,50 @@ powietze wiekasz szansa na unik 1%-5% ,10% na zminejszenie obrazen o 15%
 woda twoją skure pokrywa warstwa lodu zminiejsza obrazenia
 ogien poteżny atak ale jest to miecz obusieczny zadaje 90% hp wszystkim zostaje ci 50% hp do końca gry
 
+mechaniki:
+	-walka
+		-mag:
+			leczenia
+			obszar
+		demon
+	-poruszanie:
+		!demona														
+	-quest
+		-zadania
+		-farmer :
+			pomoc w polu
+		-shopkeeper:
+			-zdobądz x lootu?
+			-mapa
+		-medyk:
+			-znajdz zioło
+	-headVilige
+		-pokonaj obuz bandytów
+		-oczysc wioske ze szczórów
+
+
+	-narzedzia:
+		-kilof
+		-siekiera
+		-???
+
+
+	-zapis
+	-wczytywanie
+	
+	-drzewko umiejetnosci 
+
+	-grafiki
+
+		-Enemies:
+			demon
+		-umiejetnosci
+		-przedmioty
+			-skura
+			-strzały
+			-kolczuga
+			-miecz x3
+			-maczuga
+			-bizuteria
+		-animacja:
+			demon
