@@ -1,6 +1,7 @@
 import pygame
 
 from scripts.config import *
+from scripts.Skill import *
 import math
 import random
 # Wczytywanie grafiki
@@ -42,6 +43,12 @@ class Player(pygame.sprite.Sprite):
         self._layer = PLAYER_LAYER
         self.groups = self.game.all_sprites,self.game.player_group
         pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.level = 0  # Poziom gracza
+        self.xp_required = [500, 1000, 2000]  # Ilość XP potrzebna do osiągnięcia kolejnych poziomów
+        self.unlocked_skills = []  # Lista odblokowanych zdolności
+        self.xp = 500
+        self.xp_total = self.xp
 
         self.hp = 100  # Początkowa wartość HP
         self.attack = 5 # Początkowa wartość ataku
@@ -97,6 +104,42 @@ class Player(pygame.sprite.Sprite):
 
         self.animation_speed = 200
         self.last_update = 0
+    def draw_level_bar(self):
+        # Oblicz długość paska poziomu w zależności od aktualnego poziomu
+        level_bar_length = int((self.xp / self.xp_required[self.level]) * self.hp_bar_length)
+
+        # Rysuj pasek poziomu
+        pygame.draw.rect(self.game.screen, (0, 0, 255), (10, 50, level_bar_length, 30))
+        
+
+        # Rysuj ramkę paska poziomu
+        pygame.draw.rect(self.game.screen, (255, 255, 255), (10, 50, self.hp_bar_length, 30), 2)
+
+        # Dodaj tekst z aktualnym poziomem
+        font = pygame.font.Font(None, 24)
+        level_text = f"Level: {self.level} ({self.xp} / {self.xp_required[self.level]})"
+        text_surface = font.render(level_text, True, (255, 255, 255))
+        text_rect = text_surface.get_rect(center=(10 + self.hp_bar_length / 2, 50 + 30 / 2))
+        self.game.screen.blit(text_surface, text_rect)
+    def gain_xp(self, amount):
+        self.xp += amount
+        self.xp_total += amount
+        if self.level < len(self.xp_required) and self.xp >= self.xp_required[self.level]:
+            self.level_up()
+
+    def level_up(self):
+        self.level += 1
+        self.xp = 0
+
+        self.unlock_skill()
+
+    def unlock_skill(self):
+        if self.level == 1:
+            self.unlocked_skills.append(self.game.skillTree.skills[0])
+        elif self.level == 2:
+            self.unlocked_skills.append(self.game.skillTree.skills[1])
+        elif self.level == 3:
+            self.unlocked_skills.append(self.game.skillTree.skills[2])
 
     def take_damage(self, damage):
         if self.immunity_timer <= 0:
@@ -211,82 +254,6 @@ class Player(pygame.sprite.Sprite):
                     self.rect.y = hits[0].rect.top - self.rect.height
                 if self.y_change<0:
                     self.rect.y = hits[0].rect.bottom
-
-class Attack(pygame.sprite.Sprite):
-    def __init__(self, game, x, y):
-        self.game = game
-        self.x = x
-        self.y = y
-        self.width = TILESIZE
-        self.height = TILESIZE
-
-        self._layer = PLAYER_LAYER+1
-        self.groups = self.game.attacks,self.game.all_sprites
-        pygame.sprite.Sprite.__init__(self, self.groups)
-        self.animation_loop = 0
-        self.image = self.game.attack_spritesheet.get_sprite(0, 0, self.width, self.height)
-
-        self.rect = self.image.get_rect()
-        self.rect.x = self.x
-        self.rect.y = self.y
-        
-    
-        
-    def update(self):
-        self.animate()
-        self.collide()
-
-    def collide(self):
-        hits = pygame.sprite.spritecollide(self, self.game.enemies, False)
-        for enemy in hits:
-            if self.game.inventory.slots[-1]:
-                damage = self.game.player.attack + self.game.inventory.slots[-1].dmg
-            else:
-                damage = self.game.player.attack
-
-            enemy.take_damage(damage)  
-        
-    def animate(self):
-        direction = self.game.player.facing
-        right_animations = [self.game.attack_spritesheet.get_sprite(0, 64, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(32, 64, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(64, 64, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(96, 64, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(128, 64, self.width, self.height)]
-
-        down_animations = [self.game.attack_spritesheet.get_sprite(0, 32, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(32, 32, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(64, 32, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(96, 32, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(128, 32, self.width, self.height)]
-
-        left_animations = [self.game.attack_spritesheet.get_sprite(0, 96, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(32, 96, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(64, 96, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(96, 96, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(128, 96, self.width, self.height)]
-
-        up_animations = [self.game.attack_spritesheet.get_sprite(0, 0, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(32, 0, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(64, 0, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(96, 0, self.width, self.height),
-                            self.game.attack_spritesheet.get_sprite(128, 0, self.width, self.height)]
-
-        frame_index = int(self.animation_loop)  # Użyj int() do indeksacji
-        if direction == 'up':
-            self.image = up_animations[frame_index]
-        elif direction == 'down':
-            self.image = down_animations[frame_index]
-        elif direction == 'left':
-            self.image = left_animations[frame_index]
-        elif direction == 'right':
-            self.image = right_animations[frame_index]
-
-        self.animation_loop += 1/5
-
-        if self.animation_loop >= 5:
-
-            self.kill()
 
 # Bloki
 class Block(pygame.sprite.Sprite):

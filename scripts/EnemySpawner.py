@@ -237,6 +237,76 @@ class AttackMage(pygame.sprite.Sprite):
         # Znikaj po przebyciu 6 kratek od początkowej pozycji gracza
         if self.distance_travelled >= 6 * TILESIZE:
             self.kill()
+
+
+# TODO: dziwne błędy potem naprawic
+            
+class MageHealAttack(pygame.sprite.Sprite):
+    def __init__(self, game, mage, heal_amount):
+        self.game = game
+        self.mage = mage
+        self.width = TILESIZE
+        self.height = TILESIZE
+        self.heal_amount = heal_amount
+
+        self.target = pygame.Rect(0,0,0,0)
+
+        self._layer = ENEMY_LAYER + 1
+        self.groups = self.game.enemies_attacks, self.game.all_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.choose_random_enemy()
+
+
+        self.image = pygame.Surface((self.width, self.height), pygame.SRCALPHA)
+        self.image.fill((0, 255, 0))  # Zielony kolor dla leczenia, dostosuj według potrzeb
+        self.rect = pygame.Rect(self.target.x,self.target.y, self.width, self.height)
+
+        
+        self.distance_travelled = 0
+
+            
+    def choose_random_enemy(self):
+        enemies_in_radius = [enemy for enemy in self.game.enemies ]
+            
+        enemies_in_radius.remove(self.mage)
+        
+        if enemies_in_radius:
+            for e in enemies_in_radius:
+                distance_to_mage = math.sqrt((e.rect.x - self.mage.rect.x) ** 2 + (e.rect.y - self.mage.rect.y) ** 2)
+                if distance_to_mage>=3*TILESIZE:
+                    enemies_in_radius.remove(e)
+
+        if not enemies_in_radius:
+            self.kill()
+            return
+
+        self.target = random.choice(enemies_in_radius)
+        
+        
+
+   
+
+    def check_enemy_collision(self):
+        # if self.target and pygame.sprite.collide_rect(self, self.target):
+        #     if isinstance(self.target, Enemy):
+        #         self.target.heal(self.heal_amount)
+        #     self.kill()
+
+        hits = pygame.sprite.spritecollide(self, self.game.enemies, False)
+        for enemy in hits:
+            enemy.heal(self.heal_amount)
+            self.kill()
+
+    def update(self):
+        self.check_enemy_collision()
+        self.check_disappear()
+        
+
+    def check_disappear(self):
+        if self.distance_travelled >= 6 * TILESIZE:
+            self.kill()
+            
+            
 # Enemy Class
             
 class DamageAnimation(pygame.sprite.Sprite):
@@ -309,6 +379,13 @@ class Enemy(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = self.x
         self.rect.y = self.y
+    def heal(self, amount):
+        # Increase the enemy's health points when healed
+        self.hp += amount
+
+        # Ensure that the enemy's health points do not exceed the maximum
+        if self.hp > self.max_hp:
+            self.hp = self.max_hp
     def drop_loot(self):
        pass
     def take_damage(self, damage):
@@ -425,6 +502,9 @@ class Rat(Enemy):
             loot_item = Item("Skóra od szczura",(25,65,75))  # Przyjmij, że istnieje klasa Item
             self.game.inventory.add_item(loot_item)
             print("Szczur upuścił skórę!")
+        xp_amount = 5
+        self.game.player.gain_xp(xp_amount)
+        print(f"Otrzymano {xp_amount} XP za pokonanie bandyty!")
     def update(self):
         super().update()
         self.attack_timer += 1
@@ -469,6 +549,9 @@ class WildBoar(Enemy):
             loot_item = Item("Skóra od dzika",(25,65,75))  # Przyjmij, że istnieje klasa Item
             self.game.inventory.add_item(loot_item)
             print("Dzik upuścił skórę!")
+        xp_amount = 10
+        self.game.player.gain_xp(xp_amount)
+        print(f"Otrzymano {xp_amount} XP za pokonanie bandyty!")
 
     def update(self):
         super().update()
@@ -540,7 +623,7 @@ class Archer(Enemy):
         self.image = self.game.archer_spritesheet.get_sprite(2, 2, self.width, self.height)
         self.max_travel = 5*TILESIZE
 
-        self.shoot_frequency = 60*5
+        self.shoot_frequency = 60*6
         self.shoot_timer = random.randint(0, self.shoot_frequency)
         self.attacks = pygame.sprite.Group()
 
@@ -627,6 +710,9 @@ class Archer(Enemy):
             loot_item = Item("Strzały",(25,65,75))
             self.game.inventory.add_item(loot_item)
             print("Łucznik upuścił strzały!")
+        xp_amount = 15
+        self.game.player.gain_xp(xp_amount)
+        print(f"Otrzymano {xp_amount} XP za pokonanie bandyty!")
 
 
     def update(self):
@@ -731,6 +817,10 @@ class Bandit(Enemy):
             loot_item = Item("Złamany sztylet",(25,65,75))
             self.game.inventory.add_item(loot_item)
             print("Bandyta upuścił złamany sztylet!")
+        # XP za pokonanie bandyty
+        xp_amount = 20
+        self.game.player.gain_xp(xp_amount)
+        print(f"Otrzymano {xp_amount} XP za pokonanie bandyty!")
 
     def update(self):
         super().update()
@@ -760,6 +850,9 @@ class Mage(Enemy):
         self.min_distance_to_player = 3 * TILESIZE  # Minimalna odległość, przy której zaczniemy się oddalać
         self.attack_cooldown = 0
         self.attack_cooldown_max = 60  *10
+
+        self.heal_cooldown = 0
+        self.heal_cooldown_max = 300  # Example cooldown time for the healing ability
 
         self.attacks = pygame.sprite.Group()
 
@@ -799,16 +892,24 @@ class Mage(Enemy):
 
         # Księga czarów z 10% szansą
         if random.randint(1, 10) == 1:
-            loot_item = Item("Księga czarów")
+            loot_item = Item("Księga czarów",(255,10,24))
             self.game.inventory.add_item(loot_item)
             print("Mag upuścił księgę czarów!")
+        xp_amount = 30
+        self.game.player.gain_xp(xp_amount)
+        print(f"Otrzymano {xp_amount} XP za pokonanie bandyty!")
     def update(self):
         super().update()
+        
         if self.attack_cooldown <= 0:
-            self.choose_random_attack()
             self.attack_cooldown = self.attack_cooldown_max
+            self.choose_random_attack()
         else:
             self.attack_cooldown -= 1
+        if self.heal_cooldown > 0:
+            self.heal_cooldown -= 1
+        
+            
 
         self.check_attack_collision()
         self.animate()
@@ -875,28 +976,48 @@ class Mage(Enemy):
 
     def choose_random_attack(self):
         # Losowo wybierz atak
-        possible_attacks = ['heal', 'area_attack', 'normal_attack']
-        chosen_attack = random.choice(possible_attacks)
+        # possible_attacks = ['heal','normal_attack']
+        chosen_attack = None
+        chance = random.randint(1,100)
+        print(f"{chance=}")
+        if chance <= 10:
+            chosen_attack = "heal"
+        else:
+            chosen_attack= "normal_attack"
 
         if chosen_attack == 'heal':
-            self.heal()
-            self.attack()
-        elif chosen_attack == 'area_attack':
-            self.area_attack()
-            self.attack()
+            self.heal_ability()
+            print("Heal")
         elif chosen_attack == 'normal_attack':
             self.attack()
+            print("Normal")
+    def choose_target(self):
+        # Find the nearest enemy to the mage
+        enemies = [enemy for enemy in self.game.enemies if isinstance(enemy, Enemy)]
+        enemies.remove(self)
+        if enemies:
+            target = min(enemies, key=lambda enemy: pygame.math.Vector2(enemy.rect.centerx - self.rect.centerx,
+                                                                        enemy.rect.centery - self.rect.centery).length())
+            return target
+        else:
+            return None
+        
+    def heal_ability(self):
+        # Check if healing ability is off cooldown
+        if self.heal_cooldown <= 0:
+            # Create an instance of MageHealAttack to perform the healing attack
+            heal_attack = MageHealAttack(self.game, self, heal_amount=10)
+            self.game.enemies_attacks.add(heal_attack)
+
+            # Reset the cooldown
+            self.heal_cooldown = self.heal_cooldown_max
+            print("Mage used healing ability!")
 
     def attack(self):
         # Logika ataku dystansowego maga
         attack = AttackMage(self.game, self.rect.x, self.rect.y,self.game.player,damage = 10)
         self.game.enemies_attacks.add(attack)
 
-    def heal(self):
-        # Logika leczenia pobliskiego wroga
-        # target.heal(10)  # Przykładowe leczenie o 10 punktów życia
-
-        pass
     def area_attack(self):
         # Logika obszarowego ataku maga
         pass
@@ -917,7 +1038,6 @@ class Demon(Enemy):
 
 
 # Spawner Class
-# TODO: popraw dla maga
 class EnemySpawner(pygame.sprite.Sprite):
     def __init__(self, game, x, y, spawn_rate, max_spawn, enemy_class):
         self.game = game

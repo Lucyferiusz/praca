@@ -347,7 +347,8 @@ class Inventory:
     def handle_events(self, event):
         if event.type == pygame.MOUSEBUTTONDOWN:
             if event.button == 2:
-                print(f"{self.slots = }")
+                # TODO: Testy
+                pass
             if event.button == 1 and not self.game.is_mouse_dragging:
                 for i, item in enumerate(self.slots):
                     if item and item.rect.collidepoint(pygame.mouse.get_pos()):

@@ -7,6 +7,10 @@ from scripts.EnemySpawner import *
 from scripts.Quest import *
 from scripts.game_over_screen import *
 from scripts.start_menu import *
+from scripts.Skill import *
+
+
+
 
 class Game:
     def __init__(self):
@@ -29,16 +33,26 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
 
+        self.attacks = pygame.sprite.LayeredUpdates()
+
         # Nowe elementy inwentarza
         self.inventory = Inventory(self.screen,self)
         self.dragging_offset = (-20, -20)
         self.original_slot = None
         self.is_mouse_dragging = False
-
+        # Elementy SkillTree
+        skills = [
+            MultiAttack(self,'skill1.png', 'Wielo krotny atak',(0,0),500,1),
+            SpeedBust(self,"skill1.png", "Rycerski Błysk", (0,0),1000,2),
+            ImmortalDefence(self,"skill1.png", "Nieśmiertelna tarcza", (350, 100),2000,3),
+        ]
+        self.skillTree= SkillTree(self ,self.screen,skills)
+        self.skillTree_open = False
         # Przykładowa broń dodana do inwentarza
         rusted_sword = Weapon("Zardzewiały miecz", 5)
         rusted_sword.set_image("assets/img/rust_sword.png")
         self.inventory.add_item(rusted_sword)  # Dodanie testowej broni do drugiego slotu
+        
 
         # Inicjalizacja spritesheets
         self.character_spritesheet = Spritesheet('assets/img/character.png')
@@ -114,7 +128,7 @@ class Game:
                     EnemySpawnerPack(self,j,i,FPS*5,4)
                     Ground(self, j, i)
                 elif column =='a':
-                    Farmer(self,j,i)
+                    Mage(self,j,i)
                     Ground(self, j, i)
                 else:
                     Ground(self, j, i)
@@ -126,7 +140,7 @@ class Game:
         self.blocks = pygame.sprite.LayeredUpdates()
         self.enemies = pygame.sprite.LayeredUpdates()
         self.npcs = pygame.sprite.LayeredUpdates()
-        self.attacks = pygame.sprite.LayeredUpdates()
+        
         self.enemies_attacks = pygame.sprite.LayeredUpdates()
         self.player_group = pygame.sprite.LayeredUpdates()
         self.damage_frame_group = pygame.sprite.LayeredUpdates()
@@ -161,9 +175,23 @@ class Game:
 
                 if event.key == pygame.K_e:
                     self.check_interactions()
-                
-            self.inventory.handle_events(event)
+                if event.key == pygame.K_u:
+                    self.skillTree_open = not self.skillTree_open
+                    if self.skillTree_open:
+                        self.skillTree.handle_mouse_click(event)
+                if event.key == pygame.K_9:
+                    MultiAttack.use(self.skillTree.skills[0])
+                if event.key == pygame.K_8:
+                    self.skillTree.skills[1].use()
+                if event.key == pygame.K_7:
+                    self.skillTree.skills[2].use()
+            
+            if self.inventory_open:
+                self.inventory.handle_events(event)
+            if self.skillTree_open:
+                self.skillTree.handle_mouse_click(event)
             self.test_add_items(event)
+            
 
     # Metoda aktualizująca stan gry
     def update(self):
@@ -180,6 +208,7 @@ class Game:
                 self.inventory.add_test_items(2)
             if event.key == pygame.K_3:
                 self.inventory.add_test_items(3)
+        self.skillTree.skills[2].update()
 
     # Metoda sprawdzająca interakcje z NPC
     def check_interactions(self):
@@ -197,6 +226,7 @@ class Game:
         
         self.attacks.draw(self.screen)
         self.player.draw_health_bar()
+        self.player.draw_level_bar()
 
         if self.inventory_open:
             self.inventory.draw_inventory()
@@ -206,6 +236,10 @@ class Game:
                     pygame.mouse.get_pos()[0] + self.dragging_offset[0],
                     pygame.mouse.get_pos()[1] + self.dragging_offset[1]
                 )
+        if self.skillTree_open:
+            self.skillTree.draw()
+
+        self.skillTree.skills[1].update()
         pygame.display.flip()
         self.clock.tick(FPS)
 

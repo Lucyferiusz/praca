@@ -21,3 +21,8 @@ map_01 = MAP_01
 map_width = len(MAP_01[0])
 map_height = len(MAP_01)
 total_tiles = map_width * map_height
+
+# Kolory
+WHITE = (255, 255, 255)
+
+RED_GRAY = (255, 200, 200)
