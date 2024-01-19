@@ -26,6 +26,10 @@ dragging_offset = (-20, -20)
 ARMOR_SLOT_MARGIN = 10
 WEAPON_SLOT_MARGIN = 5
 
+
+
+        
+
 def calculate_armor_slot_position():
     armor_slot_x = INVENTORY_X + INVENTORY_WIDTH * SLOT_SIZE + ARMOR_SLOT_MARGIN
     armor_slot_y = INVENTORY_Y
@@ -46,10 +50,11 @@ def calculate_gold_display_position():
         return x, y
 
 class Item:
-    def __init__(self, name, image_color):
+    def __init__(self, name, image_path):
+        self.image_path = image_path
         self.name = name
-        self.image = pygame.Surface((ITEM_SIZE, ITEM_SIZE), pygame.SRCALPHA)
-        self.image.fill(image_color)
+        self.image = pygame.transform.scale(pygame.image.load(image_path).convert_alpha(), (ITEM_SIZE, ITEM_SIZE))
+        self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         self.slot = None
 
@@ -60,61 +65,68 @@ class Item:
     def set_equipped_position(self, x, y, size):
         self.rect.x = x
         self.rect.y = y
+    def new(self):
+        # Metoda do tworzenia nowej kopii obiektu
+        return type(self)(self.name, self.image_path)
 
 class Armor(Item):
-    def __init__(self, name,armor):
-        super().__init__(name, (0, 0, 255))
+    def __init__(self, name,image_path,armor):
+        super().__init__(name, image_path)
         self.equipped = False
         self.armor = armor
+        self.image = pygame.transform.scale(pygame.image.load(image_path).convert_alpha(), (ITEM_SIZE, ITEM_SIZE))
+        self.image.set_colorkey((0, 0, 0))
+    def new(self):
+        # Metoda do tworzenia nowej kopii obiektu
+        return type(self)(self.name, self.image_path,self.armor)
 
     def wear(self):
         if not self.equipped:
-            print(f"Wearing armor: {self.name}")
             self.equipped = True
             
         else:
-            print(f"Removing armor: {self.name}")
             self.equipped = False
 
     def set_equipped_position(self):
         super().set_position(*calculate_armor_slot_position()[:2])
 
-    def set_image(self, image_path):
-        original_image = pygame.image.load(image_path).convert_alpha()
-        self.image = pygame.transform.scale(original_image, (ITEM_SIZE, ITEM_SIZE))
-        self.image.set_colorkey((0, 0, 0))
+
 
 class Weapon(Item):
-    def __init__(self, name ,dmg):
-        super().__init__(name, (255, 255, 0))
+    def __init__(self, name,image ,dmg):
+        super().__init__(name, image)
         self.equipped = False
         self.dmg = dmg
         self.crt = 0
+        self.image = pygame.transform.scale(pygame.image.load(image).convert_alpha(), (ITEM_SIZE, ITEM_SIZE))
+        self.image.set_colorkey((0, 0, 0))
+    def new(self):
+        # Metoda do tworzenia nowej kopii obiektu
+        return type(self)(self.name, self.image_path,self.dmg)
 
     def equip(self):
         if not self.equipped:
-            print(f"Equipping weapon: {self.name}")
             self.equipped = True
         else:
-            print(f"Unequipping weapon: {self.name}")
             self.equipped = False
 
     def set_equipped_position(self):
         super().set_position(*calculate_weapon_slot_position()[:2])
 
-    def set_image(self, image_path):
-        original_image = pygame.image.load(image_path).convert_alpha()
-        self.image = pygame.transform.scale(original_image, (ITEM_SIZE, ITEM_SIZE))
-        self.image.set_colorkey((0, 0, 0))
+        
 
 class Potion(Item):
-    def __init__(self, name):
-        super().__init__(name, (255, 0, 0))
+    def __init__(self, name,image_path):
+        super().__init__(name,image_path)
         self.equipped = False
         self.healing = 10
         original_image = pygame.image.load("assets\img\potion.png").convert_alpha()
         self.image = pygame.transform.scale(original_image, (ITEM_SIZE, ITEM_SIZE))
         self.image.set_colorkey((0, 0, 0))
+
+    def new(self):
+        # Metoda do tworzenia nowej kopii obiektu
+        return type(self)(self.name, self.image_path)
 
 class Tool(Item):
     def __init__(self, name ,dmg):
@@ -125,10 +137,8 @@ class Tool(Item):
 
     def equip(self):
         if not self.equipped:
-            print(f"Equipping tool: {self.name}")
             self.equipped = True
         else:
-            print(f"Unequipping tool: {self.name}")
             self.equipped = False
 
     def set_equipped_position(self):
@@ -163,19 +173,18 @@ class Inventory:
         self.gold -= amount if self.gold >= amount else self.gold
     
     
-    def add_test_items(self, item_type):
-        if item_type == 1:
-            # Dodaj potion
-            potion = Potion("Test Potion")
-            self.add_item(potion)
-        elif item_type == 2:
-            # Dodaj armor
-            armor = Armor("Test Armor",5)
-            self.add_item(armor)
-        elif item_type == 3:
-            # Dodaj weapon
-            weapon = Tool("Test Weapon",1,0)
-            self.add_item(weapon)
+    # def add_test_items(self, item_type):
+    #     if item_type == 1:
+    #         # Dodaj potion
+    #         self.add_item(self.game.all_items['potion'].new())
+    #     elif item_type == 2:
+    #         # Dodaj armor
+    #         armor = Armor("Test Armor",5)
+    #         self.add_item(armor)
+    #     elif item_type == 3:
+    #         # Dodaj weapon
+    #         weapon = Tool("Test Weapon",1,0)
+    #         self.add_item(weapon)
             
     def add_item(self, item, slot=None):
         if slot is not None:
@@ -245,7 +254,7 @@ class Inventory:
                         else:
                             self.remove_item(selected_item.slot)
                             if not self.game.player.invulnerable:  # Sprawdź, czy gracz nie jest nietykalny
-                                self.game.player.heal(100)
+                                self.game.player.heal(15)
                                 self.game.player.invulnerable = True  # Ustaw nietykalność po otrzymaniu obrażeń
                                 self.game.player.invulnerable_timer = pygame.time.get_ticks()
                                 
@@ -460,3 +469,4 @@ class Inventory:
 
             if empty_slot is not None:
                 self.add_item(self.selected_item_for_context_menu)
+

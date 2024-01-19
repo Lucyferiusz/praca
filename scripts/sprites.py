@@ -47,7 +47,7 @@ class Player(pygame.sprite.Sprite):
         self.level = 0  # Poziom gracza
         self.xp_required = [500, 1000, 2000]  # Ilość XP potrzebna do osiągnięcia kolejnych poziomów
         self.unlocked_skills = []  # Lista odblokowanych zdolności
-        self.xp = 500
+        self.xp = 499
         self.xp_total = self.xp
 
         self.hp = 100  # Początkowa wartość HP
@@ -130,6 +130,9 @@ class Player(pygame.sprite.Sprite):
     def level_up(self):
         self.level += 1
         self.xp = 0
+
+        self.max_hp = int(self.max_hp*1.2)
+        self.hp = self.max_hp
 
         self.unlock_skill()
 

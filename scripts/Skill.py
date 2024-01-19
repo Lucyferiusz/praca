@@ -228,6 +228,9 @@ class SkillTree:
             # Dodaj pasek postępu (o ile umiejętność nie jest odblokowana)
             
             progress_width = (self.game.player.xp_total / skill.xp_required) * 100  # Szerokość paska postępu
+            if progress_width >=100:
+                progress_width = 100
+                
             pygame.draw.rect(self.screen, GREEN, (x, y + 130, progress_width, 10))
             pygame.draw.rect(self.screen, GREEN, (x, y + 130, 100, 10),2)
             pygame.draw.rect(self.screen, color, skill.rect)

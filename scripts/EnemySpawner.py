@@ -238,9 +238,6 @@ class AttackMage(pygame.sprite.Sprite):
         if self.distance_travelled >= 6 * TILESIZE:
             self.kill()
 
-
-# TODO: dziwne błędy potem naprawic
-            
 class MageHealAttack(pygame.sprite.Sprite):
     def __init__(self, game, mage, heal_amount):
         self.game = game
@@ -287,11 +284,6 @@ class MageHealAttack(pygame.sprite.Sprite):
    
 
     def check_enemy_collision(self):
-        # if self.target and pygame.sprite.collide_rect(self, self.target):
-        #     if isinstance(self.target, Enemy):
-        #         self.target.heal(self.heal_amount)
-        #     self.kill()
-
         hits = pygame.sprite.spritecollide(self, self.game.enemies, False)
         for enemy in hits:
             enemy.heal(self.heal_amount)
@@ -391,7 +383,6 @@ class Enemy(pygame.sprite.Sprite):
     def take_damage(self, damage):
         if not self.damage_animation:
             self.hp -= damage
-            print(f"{self.hp}/{self.max_hp}")
             self.show_damage_animation()
             if self.hp <= 0:
                 self.damage_animation.kill()
@@ -496,15 +487,16 @@ class Rat(Enemy):
         self.image = self.game.rats_spritesheet.get_sprite(0, 0, self.width, self.height)
         self.hp = 25
         self.max_hp = self.hp
+
+        self.enemy_type = "Rat"
     def drop_loot(self):
         # Szansa 10% na skórę od szczura
         if random.randint(1, 10) == 1:
-            loot_item = Item("Skóra od szczura",(25,65,75))  # Przyjmij, że istnieje klasa Item
+            loot_item = self.game.all_items['lether'].new()
             self.game.inventory.add_item(loot_item)
-            print("Szczur upuścił skórę!")
         xp_amount = 5
         self.game.player.gain_xp(xp_amount)
-        print(f"Otrzymano {xp_amount} XP za pokonanie bandyty!")
+        
     def update(self):
         super().update()
         self.attack_timer += 1
@@ -512,6 +504,10 @@ class Rat(Enemy):
         # Sprawdź, czy gracz jest wystarczająco blisko i czy minął czas od ostatniego ataku
         if self.distance_to_player() <= self.attack_range and self.attack_timer >= self.attack_cooldown:
             self.attack_player()
+
+    def kill(self) -> None:
+        super().kill()
+        self.game.quest_log.update(self.game.player, self.enemy_type)
 
     def attack_player(self):
         # Zadaj obrażenia graczowi
@@ -532,6 +528,8 @@ class WildBoar(Enemy):
         self.hp = 50
         self.max_hp = self.hp
 
+        self.enemy_type = "WildBoar"
+
         self.attack_range = TILESIZE * 1  # Zakres ataku w pikselach
         self.attack_damage = 15  # Obrażenia zadawane przez atak
         self.attack_cooldown = 60*1  # Cooldown ataku w klatkach
@@ -546,12 +544,10 @@ class WildBoar(Enemy):
     def drop_loot(self):
         # Szansa 10% na skórę od dzika
         if random.randint(1, 10) == 1:
-            loot_item = Item("Skóra od dzika",(25,65,75))  # Przyjmij, że istnieje klasa Item
+            loot_item = self.game.all_items['lether'].new()
             self.game.inventory.add_item(loot_item)
-            print("Dzik upuścił skórę!")
         xp_amount = 10
         self.game.player.gain_xp(xp_amount)
-        print(f"Otrzymano {xp_amount} XP za pokonanie bandyty!")
 
     def update(self):
         super().update()
@@ -596,6 +592,9 @@ class WildBoar(Enemy):
 
             if distance_from_start >= 4 * TILESIZE:
                 self.end_charge()
+    def kill(self) -> None:
+        super().kill()
+        self.game.quest_log.update(self.game.player, self.enemy_type)
 
     def end_charge(self):
         self.charging = False
@@ -618,6 +617,8 @@ class Archer(Enemy):
         super().__init__(game, x, y)
         self.hp = 35
         self.max_hp = self.hp
+
+        self.enemy_type = "Archer"
 
         self.speed = 0.90
         self.image = self.game.archer_spritesheet.get_sprite(2, 2, self.width, self.height)
@@ -697,22 +698,26 @@ class Archer(Enemy):
         # Gold w przedziale od 3 do 7
         gold_amount = random.randint(3, 7)
         self.game.player.gold += gold_amount
-        print(f"Łucznik upuścił {gold_amount} złota!")
+
 
         # Skradziona biżuteria z 15% szansą
         if random.randint(1, 100) <= 15:
-            loot_item = Item("Skradziona biżuteria",(25,65,75))
+            loot_item = self.game.all_items['jewellery'].new()
             self.game.inventory.add_item(loot_item)
-            print("Łucznik upuścił skradzioną biżuterię!")
+    
 
         # Strzały z 50% szansą
         if random.randint(1, 100) <= 50:
-            loot_item = Item("Strzały",(25,65,75))
+            loot_item = self.game.all_items['arrow'].new()
             self.game.inventory.add_item(loot_item)
-            print("Łucznik upuścił strzały!")
+    
         xp_amount = 15
         self.game.player.gain_xp(xp_amount)
-        print(f"Otrzymano {xp_amount} XP za pokonanie bandyty!")
+
+
+    def kill(self) -> None:
+        super().kill()
+        self.game.quest_log.update(self.game.player, self.enemy_type)
 
 
     def update(self):
@@ -743,6 +748,8 @@ class Bandit(Enemy):
         self.frame_index = 0  # Indeks bieżącej klatki animacji
         self.animation_speed = 200
         self.last_update = 0
+
+        self.enemy_type = "Bandit"
 
         self.frames = {
             'down': [self.game.bandit_spritesheet.get_sprite(2, 2, self.width, self.height),
@@ -804,24 +811,25 @@ class Bandit(Enemy):
         # Gold w przedziale od 5 do 10
         gold_amount = random.randint(5, 10)
         self.game.player.gold += gold_amount
-        print(f"Bandyta upuścił {gold_amount} złota!")
 
         # Skradziona biżuteria z 20% szansą
         if random.randint(1, 100) <= 20:
-            loot_item = Item("Skradziona biżuteria",(25,65,75))
+            loot_item = self.game.all_items['jewellery'].new()
             self.game.inventory.add_item(loot_item)
-            print("Bandyta upuścił skradzioną biżuterię!")
+            
 
         # Złamany sztylet z 10% szansą
         if random.randint(1, 100) <= 10:
-            loot_item = Item("Złamany sztylet",(25,65,75))
+            loot_item = self.game.all_items['broken_dagger'].new()
             self.game.inventory.add_item(loot_item)
-            print("Bandyta upuścił złamany sztylet!")
+            
         # XP za pokonanie bandyty
         xp_amount = 20
         self.game.player.gain_xp(xp_amount)
-        print(f"Otrzymano {xp_amount} XP za pokonanie bandyty!")
-
+        
+    def kill(self) -> None:
+        super().kill()
+        self.game.quest_log.update(self.game.player, self.enemy_type)    
     def update(self):
         super().update()
         self.attack_timer += 1
@@ -845,6 +853,7 @@ class Mage(Enemy):
         self.image = self.game.mage_spritesheet.get_sprite(4, 6, self.width, self.height)
         self.hp = 30
         self.max_hp = self.hp
+        self.enemy_type = "Mage"
 
         self.distance_to_player = 4 * TILESIZE
         self.min_distance_to_player = 3 * TILESIZE  # Minimalna odległość, przy której zaczniemy się oddalać
@@ -888,16 +897,13 @@ class Mage(Enemy):
         # Gold w przedziale od 7 do 15
         gold_amount = random.randint(7, 15)
         self.game.player.gold += gold_amount
-        print(f"Mag upuścił {gold_amount} złota!")
 
         # Księga czarów z 10% szansą
         if random.randint(1, 10) == 1:
-            loot_item = Item("Księga czarów",(255,10,24))
+            loot_item = self.game.all_items['book'].new()
             self.game.inventory.add_item(loot_item)
-            print("Mag upuścił księgę czarów!")
         xp_amount = 30
         self.game.player.gain_xp(xp_amount)
-        print(f"Otrzymano {xp_amount} XP za pokonanie bandyty!")
     def update(self):
         super().update()
         
@@ -979,7 +985,6 @@ class Mage(Enemy):
         # possible_attacks = ['heal','normal_attack']
         chosen_attack = None
         chance = random.randint(1,100)
-        print(f"{chance=}")
         if chance <= 10:
             chosen_attack = "heal"
         else:
@@ -1008,10 +1013,11 @@ class Mage(Enemy):
             # Create an instance of MageHealAttack to perform the healing attack
             heal_attack = MageHealAttack(self.game, self, heal_amount=10)
             self.game.enemies_attacks.add(heal_attack)
-
             # Reset the cooldown
             self.heal_cooldown = self.heal_cooldown_max
-            print("Mage used healing ability!")
+    def kill(self) -> None:
+        super().kill()
+        self.game.quest_log.update(self.game.player, self.enemy_type)
 
     def attack(self):
         # Logika ataku dystansowego maga
@@ -1031,7 +1037,11 @@ class Demon(Enemy):
         super().__init__(game, x, y)
         self.image = self.game.enemies_spritesheet.get_sprite(10, 15, self.width, self.height)
         self.hp = 50
+        self.enemy_type = "Demon"
 
+    def kill(self) -> None:
+        super().kill()
+        self.game.quest_log.update(self.game.player, self.enemy_type)
     def attack(self):
         # Logika ataku dystansowego demona
         pass
@@ -1044,7 +1054,6 @@ class EnemySpawner(pygame.sprite.Sprite):
         self.groups = self.game.all_sprites
         pygame.sprite.Sprite.__init__(self, self.groups)
         self.image = pygame.Surface((TILESIZE, TILESIZE), pygame.SRCALPHA)
-        self.image.fill((255, 0, 0))  # Kolor czerwony dla spawnera
         self.x = x * TILESIZE
         self.y = y * TILESIZE
 
@@ -1109,8 +1118,6 @@ class EnemySpawnerPack(pygame.sprite.Sprite):
         self.spawn_timer += 1
         # Sprawdź, czy przyszedł czas na stworzenie nowego przeciwnika
         if self.spawn_timer >= self.spawn_rate and len(self.spawned_enemies) < self.max_spawn:
-            
-                        
             # Stwórz nowego przeciwnika i ustaw go w losowym miejscu wokół spawnera
             enemy = self.enemy_class(self.game, self.x_spawn + 0 * TILESIZE,
                                 self.y_spawn + 0 * TILESIZE)

@@ -65,49 +65,33 @@ woda twoją skure pokrywa warstwa lodu zminiejsza obrazenia
 ogien poteżny atak ale jest to miecz obusieczny zadaje 90% hp wszystkim zostaje ci 50% hp do końca gry
 
 mechaniki:
+-Enemies:
+		demon
 	-walka
-		-mag:
-			leczenia
-			obszar
 		demon
 	-poruszanie:
-		!demona														
+		!demona	
+	-grafiki:
+		demon
+	-animacja:
+		demon
+
+------------------------											
 	-quest
-		-zadania
 		-farmer :
 			pomoc w polu
-		-shopkeeper:
-			-zdobądz x lootu?
-			-mapa
 		-medyk:
 			-znajdz zioło
-	-headVilige
-		-pokonaj obuz bandytów
-		-oczysc wioske ze szczórów
+-------------------------
+
+questy od npc
 
 
-	-narzedzia:
-		-kilof
-		-siekiera
-		-???
+-zapis
+-wczytywanie
 
-
-	-zapis
-	-wczytywanie
 	
-	-drzewko umiejetnosci 
-
-	-grafiki
-
-		-Enemies:
-			demon
-		-umiejetnosci
-		-przedmioty
-			-skura
-			-strzały
-			-kolczuga
-			-miecz x3
-			-maczuga
-			-bizuteria
-		-animacja:
-			demon
+-umiejetnosci x3 grafiki	
+	1 - miecz + zamach
+	2 - but 
+	3 - tarcza

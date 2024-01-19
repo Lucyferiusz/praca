@@ -9,9 +9,6 @@ from scripts.game_over_screen import *
 from scripts.start_menu import *
 from scripts.Skill import *
 
-
-
-
 class Game:
     def __init__(self):
         pygame.init()
@@ -34,6 +31,7 @@ class Game:
         self.running = True
 
         self.attacks = pygame.sprite.LayeredUpdates()
+        self.spawners = pygame.sprite.LayeredUpdates()
 
         # Nowe elementy inwentarza
         self.inventory = Inventory(self.screen,self)
@@ -49,9 +47,46 @@ class Game:
         self.skillTree= SkillTree(self ,self.screen,skills)
         self.skillTree_open = False
         # Przykładowa broń dodana do inwentarza
-        rusted_sword = Weapon("Zardzewiały miecz", 5)
-        rusted_sword.set_image("assets/img/rust_sword.png")
-        self.inventory.add_item(rusted_sword)  # Dodanie testowej broni do drugiego slotu
+        #itemy
+        
+        self.all_items ={
+            "rusted_sword": Weapon("Zardzewiały miecz","assets/img/rust_sword.png",5),
+            "sword":Weapon("Ostry miecz","assets/img/sword_1.png",10),
+            "saber":Weapon("Szabla","assets/img/sword_2.png",15),
+            "club":Weapon("Metalowa maczuga","assets/img/club.png",20),
+            #armor
+            "lether_armor":Armor("Skurzana zbroja","assets/img/lether_armor.png",5),
+            "chain_armor":Armor("Kolczuga","assets/img/chain.png",15),
+            "plate_armor":Armor("Zbroja płytowa","assets/img/plate_armor.png",20),
+            
+            #item
+            "potion": Potion("Potion","assets/img/potion.png"),
+            "lether": Item("Skóra","assets/img/lether.png"),
+            "jewellery": Item("Birzuteria","assets/img/jewellery.png"),
+            "arrow": Item("Strzały","assets/img/arrow.png"),
+            "book": Item("Księga","assets/img/book.png"), # TODO nowa grafika
+            "skull": Item("Czaszka","assets/img/demon_skull.png"),
+            "broken_dagger": Item("Złamany miecz","assets/img/broken_dagger.png"), # TODO nowa grafika
+
+
+        }
+        
+        
+        self.inventory.add_item(self.all_items['rusted_sword'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['sword'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['saber'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['club'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['lether_armor'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['chain_armor'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['plate_armor'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['potion'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['lether'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['jewellery'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['arrow'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['book'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['skull'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['broken_dagger'].new())  # Dodanie testowej broni do drugiego slotu
+        
         
 
         # Inicjalizacja spritesheets
@@ -72,6 +107,23 @@ class Game:
         self.screen = pygame.display.set_mode((self.WIN_WIDTH, self.WIN_HEIGHT))
         self.clock = pygame.time.Clock()
         self.inventory_open = False
+        # self.dialogue_box = False
+        
+        # Questy
+        
+        self.killed_enemies = []
+        self.current_quest = 0
+        self.quest_log_open = False
+        self.quest_log = QuestLog()
+        # self.quest_log.add_quest(farmer_quest)
+        # self.quest_log.add_quest(shopkeeper_quest)
+        # self.quest_log.add_quest(medic_quest)
+        self.quest_log.add_quest(item_quest)
+        self.quest_log.add_quest(head_village_quest)
+        self.quest_log.add_quest(rat_nest_quest)
+    def kill_enemy(self, enemy_type):
+        # Metoda wywoływana po zabiciu przeciwnika
+        self.killed_enemies.append(enemy_type)
 
     # Metoda rysująca tekst na ekranie
     def draw_text(self, text, font, color, x, y):
@@ -123,12 +175,20 @@ class Game:
                 elif column == 'h':
                     Ground(self, j, i)
                     Healer(self, j, i)
+                elif column == 'F':
+                    Ground(self, j, i)
+                    Farmer(self, j, i)
+                elif column == '$':
+                    Ground(self, j, i)
+                    Shopkeeper(self, j, i)
                 elif column =='R':
-                    # EnemySpawner(self,j,i,FPS*1,1,Rat)
+                    EnemySpawner(self,j,i,FPS*4,5,Rat)
+                    Ground(self, j, i)
+                elif column =='?':
                     EnemySpawnerPack(self,j,i,FPS*5,4)
                     Ground(self, j, i)
                 elif column =='a':
-                    Mage(self,j,i)
+                    Rat(self,j,i)
                     Ground(self, j, i)
                 else:
                     Ground(self, j, i)
@@ -155,6 +215,19 @@ class Game:
                 self.running = False
             
             if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_KP2:
+                    if self.current_quest == 0:
+                        self.current_quest=0
+                    else:
+                        self.current_quest-=1
+                        print("-")
+                if event.key == pygame.K_KP8:
+                    if self.current_quest == len(self.quest_log.quests)-1:
+                        self.current_quest=len(self.quest_log.quests)-1
+                    else:
+                        self.current_quest+=1
+                        
+                    
                 if event.key == pygame.K_SPACE:
                     if self.player.facing == 'up':
                         self.attack0 = Attack(self, self.player.rect.x ,self.player.rect.y-TILESIZE )
@@ -172,6 +245,8 @@ class Game:
 
                     if self.inventory_open:
                         self.inventory.draw_inventory()
+                if event.key == pygame.K_q:
+                    self.quest_log_open = not self.quest_log_open
 
                 if event.key == pygame.K_e:
                     self.check_interactions()
@@ -179,18 +254,18 @@ class Game:
                     self.skillTree_open = not self.skillTree_open
                     if self.skillTree_open:
                         self.skillTree.handle_mouse_click(event)
-                if event.key == pygame.K_9:
+                if event.key == pygame.K_1:
                     MultiAttack.use(self.skillTree.skills[0])
-                if event.key == pygame.K_8:
+                if event.key == pygame.K_2:
                     self.skillTree.skills[1].use()
-                if event.key == pygame.K_7:
+                if event.key == pygame.K_3:
                     self.skillTree.skills[2].use()
             
             if self.inventory_open:
                 self.inventory.handle_events(event)
             if self.skillTree_open:
                 self.skillTree.handle_mouse_click(event)
-            self.test_add_items(event)
+            
             
 
     # Metoda aktualizująca stan gry
@@ -198,16 +273,6 @@ class Game:
         self.all_sprites.update()
                 
         pygame.display.update()
-
-    # Metoda do testowego dodawania przedmiotów
-    def test_add_items(self,event):
-        if event.type == pygame.KEYDOWN:
-            if event.key == pygame.K_1:
-                self.inventory.add_test_items(1)
-            if event.key == pygame.K_2:
-                self.inventory.add_test_items(2)
-            if event.key == pygame.K_3:
-                self.inventory.add_test_items(3)
         self.skillTree.skills[2].update()
 
     # Metoda sprawdzająca interakcje z NPC
@@ -238,7 +303,10 @@ class Game:
                 )
         if self.skillTree_open:
             self.skillTree.draw()
-
+        if self.quest_log_open == True:
+            self.quest_log.display_quests(self.screen,self.current_quest)
+        else:
+            self.current_quest = 0
         self.skillTree.skills[1].update()
         pygame.display.flip()
         self.clock.tick(FPS)
@@ -249,6 +317,7 @@ class Game:
             self.events()
             self.update()
             self.draw()
+            
         self.running = False
 
     # Metoda wyświetlająca ekran końca gry
