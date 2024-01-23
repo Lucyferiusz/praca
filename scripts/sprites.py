@@ -38,7 +38,7 @@ class Camera:
 # Gracz
 class Player(pygame.sprite.Sprite):
     def __init__(self, game, x, y):
-        self.gold = 100
+        self.gold = 10
         self.game = game
         self._layer = PLAYER_LAYER
         self.groups = self.game.all_sprites,self.game.player_group
@@ -47,7 +47,7 @@ class Player(pygame.sprite.Sprite):
         self.level = 0  # Poziom gracza
         self.xp_required = [500, 1000, 2000]  # Ilość XP potrzebna do osiągnięcia kolejnych poziomów
         self.unlocked_skills = []  # Lista odblokowanych zdolności
-        self.xp = 499
+        self.xp = 0
         self.xp_total = self.xp
 
         self.hp = 100  # Początkowa wartość HP
