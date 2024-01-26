@@ -15,7 +15,7 @@ class Game:
         pygame.mixer.init()
         background_music_path = "assets/music/1.mp3"
         pygame.mixer.music.load(background_music_path)
-        pygame.mixer.music.set_volume(0.05)
+        pygame.mixer.music.set_volume(0.02)
         pygame.mixer.music.play(-1)
 
         # Poziom przybliżenia i wymiary okna gry
@@ -29,6 +29,7 @@ class Game:
         self.screen = pygame.display.set_mode((self.WIN_WIDTH, self.WIN_HEIGHT))
         self.clock = pygame.time.Clock()
         self.running = True
+        self.win_game = False
 
         self.attacks = pygame.sprite.LayeredUpdates()
         self.spawners = pygame.sprite.LayeredUpdates()
@@ -40,9 +41,9 @@ class Game:
         self.is_mouse_dragging = False
         # Elementy SkillTree
         skills = [
-            MultiAttack(self,'skill1.png', 'Wielo krotny atak',(0,0),500,1),
-            SpeedBust(self,"skill1.png", "Rycerski Błysk", (0,0),1000,2),
-            ImmortalDefence(self,"skill1.png", "Nieśmiertelna tarcza", (350, 100),2000,3),
+            MultiAttack(self,'assets/img/skill1.png', 'Wielo krotny atak',(0,0),500,1),
+            SpeedBust(self,"assets/img/skill2.png", "Rycerski Błysk", (0,0),1000,2),
+            ImmortalDefence(self,"assets/img/skill3.png", "Nieśmiertelna tarcza", (350, 100),2000,3),
         ]
         self.skillTree= SkillTree(self ,self.screen,skills)
         self.skillTree_open = False
@@ -50,42 +51,30 @@ class Game:
         #itemy
         
         self.all_items ={
-            "rusted_sword": Weapon("Zardzewiały miecz","assets/img/rust_sword.png",5),
-            "sword":Weapon("Ostry miecz","assets/img/sword_1.png",10),
-            "saber":Weapon("Szabla","assets/img/sword_2.png",15),
-            "club":Weapon("Metalowa maczuga","assets/img/club.png",20),
+            "rusted_sword": Weapon("Zardzewiały miecz","assets/img/rust_sword.png",5,0),
+            "sword":Weapon("Ostry miecz","assets/img/sword_1.png",10,25),
+            "saber":Weapon("Szabla","assets/img/sword_2.png",15,100),
+            "club":Weapon("Metalowa maczuga","assets/img/club.png",20,500),
             #armor
-            "lether_armor":Armor("Skurzana zbroja","assets/img/lether_armor.png",5),
-            "chain_armor":Armor("Kolczuga","assets/img/chain.png",15),
-            "plate_armor":Armor("Zbroja płytowa","assets/img/plate_armor.png",20),
+            "lether_armor":Armor("Skurzana zbroja","assets/img/lether_armor.png",5,30),
+            "chain_armor":Armor("Kolczuga","assets/img/chain.png",15,150),
+            "plate_armor":Armor("Zbroja płytowa","assets/img/plate_armor.png",20,750),
             
             #item
-            "potion": Potion("Potion","assets/img/potion.png"),
-            "lether": Item("Skóra","assets/img/lether.png"),
-            "jewellery": Item("Birzuteria","assets/img/jewellery.png"),
-            "arrow": Item("Strzały","assets/img/arrow.png"),
-            "book": Item("Księga","assets/img/book.png"), # TODO nowa grafika
-            "skull": Item("Czaszka","assets/img/demon_skull.png"),
-            "broken_dagger": Item("Złamany miecz","assets/img/broken_dagger.png"), # TODO nowa grafika
+            "potion": Potion("Potion","assets/img/potion.png",20),
+            "lether": Item("Skóra","assets/img/lether.png",2),
+            "jewellery": Item("Birzuteria","assets/img/jewellery.png",15),
+            "arrow": Item("Strzały","assets/img/arrow.png",1),
+            "book": Item("Księga","assets/img/book.png",5), # TODO nowa grafika
+            "skull": Item("Czaszka","assets/img/demon_skull.png",1000),
+            "broken_dagger": Item("Złamany miecz","assets/img/broken_dagger.png",8), # TODO nowa grafika
 
 
         }
         
         
         self.inventory.add_item(self.all_items['rusted_sword'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['sword'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['saber'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['club'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['lether_armor'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['chain_armor'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['plate_armor'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['potion'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['lether'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['jewellery'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['arrow'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['book'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['skull'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['broken_dagger'].new())  # Dodanie testowej broni do drugiego slotu
+
         
         
 
@@ -99,6 +88,7 @@ class Game:
         self.attack_spritesheet = Spritesheet('assets/img/attack.png')
         self.rats_spritesheet = Spritesheet('assets/img/rats.png')
         self.wildboar_spritesheet = Spritesheet('assets/img/wildboar.png')
+        self.demon_spritesheet = Spritesheet('assets/img/demon32.png')
 
         # Inne elementy i ustawienia
         self.question_mark_image = pygame.image.load('assets/img/rat.png')
@@ -112,15 +102,12 @@ class Game:
         # Questy
         
         self.killed_enemies = []
+        self.rat_spawner = []
+        self.demon_spawner = []
         self.current_quest = 0
         self.quest_log_open = False
-        self.quest_log = QuestLog()
-        # self.quest_log.add_quest(farmer_quest)
-        # self.quest_log.add_quest(shopkeeper_quest)
-        # self.quest_log.add_quest(medic_quest)
-        self.quest_log.add_quest(item_quest)
-        self.quest_log.add_quest(head_village_quest)
-        self.quest_log.add_quest(rat_nest_quest)
+        self.quest_log = QuestLog(self)
+        
     def kill_enemy(self, enemy_type):
         # Metoda wywoływana po zabiciu przeciwnika
         self.killed_enemies.append(enemy_type)
@@ -150,7 +137,7 @@ class Game:
                     self.camera = Camera(self, self.player)
                     Ground(self, j, i)
                 elif column == "D":
-                    EnemySpawner(self,j,i,10*FPS,5,WildBoar)
+                    EnemySpawner(self,j,i,1*FPS,5,WildBoar)
                     Ground(self, j, i)
                 elif column == "N":
                     NPC(self, j, i)
@@ -182,13 +169,16 @@ class Game:
                     Ground(self, j, i)
                     Shopkeeper(self, j, i)
                 elif column =='R':
-                    EnemySpawner(self,j,i,FPS*4,5,Rat)
+                    self.rat_spawner.append(RatSpawner(self,j,i,FPS*4,5,Rat,False))
+                    Ground(self, j, i)
+                elif column =='^':
+                    self.demon_spawner.append(DemonSpawner(self,j,i,FPS*4,1,Demon,False))
                     Ground(self, j, i)
                 elif column =='?':
                     EnemySpawnerPack(self,j,i,FPS*5,4)
                     Ground(self, j, i)
                 elif column =='a':
-                    Rat(self,j,i)
+                    # Demon(self,j,i)
                     Ground(self, j, i)
                 else:
                     Ground(self, j, i)
@@ -220,7 +210,6 @@ class Game:
                         self.current_quest=0
                     else:
                         self.current_quest-=1
-                        print("-")
                 if event.key == pygame.K_KP8:
                     if self.current_quest == len(self.quest_log.quests)-1:
                         self.current_quest=len(self.quest_log.quests)-1
@@ -305,8 +294,7 @@ class Game:
             self.skillTree.draw()
         if self.quest_log_open == True:
             self.quest_log.display_quests(self.screen,self.current_quest)
-        else:
-            self.current_quest = 0
+        
         self.skillTree.skills[1].update()
         pygame.display.flip()
         self.clock.tick(FPS)
@@ -317,11 +305,17 @@ class Game:
             self.events()
             self.update()
             self.draw()
+            if self.win_game:
+                self.game_win()
             
         self.running = False
 
     # Metoda wyświetlająca ekran końca gry
     def game_over(self):
+        game_over_screen = GameOverScreen(self.WIN_WIDTH, self.WIN_HEIGHT)
+        game_over_screen.show()
+        pass
+    def game_win(self):
         game_over_screen = GameOverScreen(self.WIN_WIDTH, self.WIN_HEIGHT)
         game_over_screen.show()
         pass

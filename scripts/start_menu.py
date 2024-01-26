@@ -16,15 +16,15 @@ class StartMenu:
                     mouse_x, mouse_y = pygame.mouse.get_pos()
                     if self.is_clicked(mouse_x, mouse_y, self.screen.get_width() // 2, self.screen.get_height() // 2 - 50):
                         return "start"
-                    elif self.is_clicked(mouse_x, mouse_y, self.screen.get_width() // 2, self.screen.get_height() // 2):
-                        return "load"
+                    # elif self.is_clicked(mouse_x, mouse_y, self.screen.get_width() // 2, self.screen.get_height() // 2):
+                    #     return "load"
                     elif self.is_clicked(mouse_x, mouse_y, self.screen.get_width() // 2, self.screen.get_height() // 2 + 50):
                         pygame.quit()
                         sys.exit()
 
             self.screen.fill((0, 0, 0))
             self.draw_text("Start Game", (255, 255, 255), self.screen.get_width() // 2, self.screen.get_height() // 2 - 50)
-            self.draw_text("Load Game", (255, 255, 255), self.screen.get_width() // 2, self.screen.get_height() // 2)
+            # self.draw_text("Load Game", (255, 255, 255), self.screen.get_width() // 2, self.screen.get_height() // 2)
             self.draw_text("Quit", (255, 255, 255), self.screen.get_width() // 2, self.screen.get_height() // 2 + 50)
 
             pygame.display.flip()

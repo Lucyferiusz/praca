@@ -76,22 +76,8 @@ mechaniki:
 	-animacja:
 		demon
 
-------------------------											
-	-quest
-		-farmer :
-			pomoc w polu
-		-medyk:
-			-znajdz zioło
--------------------------
 
-questy od npc
-
-
+-final quest kill demon (spawn )
 -zapis
 -wczytywanie
 
-	
--umiejetnosci x3 grafiki	
-	1 - miecz + zamach
-	2 - but 
-	3 - tarcza

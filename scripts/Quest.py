@@ -11,9 +11,10 @@ class Quest:
         self.rewards = rewards
         self.completed = False
         self.claim = False
-        self.enemy_type = None
+        
+        
 
-    def check_completion(self, enemy_type,enemy_type_target=None, item=None, interacted=False):
+    def check_completion(self, enemy_type = None,enemy_type_target=None, item=None, interacted=False):
         # Sprawdzanie, czy wszystkie zadania zostały ukończone
         
         if not any([enemy_type_target, item, interacted]):
@@ -22,15 +23,13 @@ class Quest:
             for task in self.tasks:
                 
                 if task.get('enemy_type') == enemy_type and task['type'] == 'kill' and not task['completed']:
-                    task['current_count'] += 1
-                    
-                    task['completed'] = task['current_count'] >= task['target_count']
-                elif task.get('item') == item and task['type'] == 'item':
-                    task['current_count'] += 1
-                    task['completed'] = task['current_count'] >= task['target_count']
+                    task['current_count_kill'] += 1
+                    task['completed'] = task['current_count_kill'] >= task['target_count_kill']
+                elif task.get('item') == item and task['type'] == 'item' and not task['completed'] :
+                    task['current_count_item'] += 1
+                    task['completed'] = task['current_count_item'] >= task['target_count_item']
                 elif task.get('type') == 'interact':
                     task['completed'] = interacted
-            self.enemy_type = None
             self.completed = all(task['completed'] for task in self.tasks)
 
     def claim_rewards(self, player):
@@ -46,23 +45,42 @@ class Quest:
     
 
 class QuestLog:
-    def __init__(self):
+    def __init__(self,game):
+
+        self.active_quest = False
         self.quests = []
         self.complete_quests = []
-        
+        self.game = game
 
     def add_quest(self, quest):
         # Dodawanie nowego questu do QuestLogu
-        self.quests.append(quest)
+        if not self.active_quest:
+            self.quests.append(quest)
+            self.active_quest = True
     def remove_quest(self, quest):
         # Dodawanie nowego questu do QuestLogu
         self.quests.remove(quest)
+        if quest.tasks[0]['type']=='kill' and quest.tasks[0]['enemy_type'] == "Rat":
+            for rats in self.game.rat_spawner:
+                rats.active_quest_rat = False
+            pass
+        if quest.tasks[0]['type']=='kill' and quest.tasks[0]['enemy_type'] == "Demon":
+            print("win")
+            for demon in self.game.demon_spawner:
+                demon.active_quest_demon = False
+            self.game.win_game = True
+            pass
+        self.active_quest = False
 
-    def update(self, player,enemy_type):
+    def update(self, player,enemy_type = None,item = None):
         # Aktualizacja stanu questów w QuestLogu       
         for quest in self.quests:
             for task in quest.tasks:
-                quest.check_completion(enemy_type,task['enemy_type'])
+                if task['type']== 'kill':
+                    quest.check_completion(enemy_type= enemy_type, enemy_type_target=task['enemy_type'])
+                elif task['type']== 'item':
+                    quest.check_completion(item = item)
+                    pass
             if quest.completed:
                 quest.claim_rewards(player)
                 self.remove_quest(quest)
@@ -96,8 +114,11 @@ class QuestLog:
         for task in quest.tasks:
             status = "Completed" if task['completed'] else "Incomplete"
             text_task = font.render(f" - {task['name']}: {status}", True, BLACK)
-            if task['type']=='kill' or task['type']=='item':
-                progres = font.render(f"{task['current_count'] } / {task['target_count']}", True, BLACK)
+            if task['type']=='kill':
+                progres = font.render(f"{task['current_count_kill'] } / {task['target_count_kill']}", True, BLACK)
+                surface.blit(progres, (50+text_task.get_width()+10, y_offset))
+            if task['type']=='item':
+                progres = font.render(f"{task['current_count_item'] } / {task['target_count_item']}", True, BLACK)
                 surface.blit(progres, (50+text_task.get_width()+10, y_offset))
             surface.blit(text_task, (50, y_offset))
             
@@ -148,7 +169,15 @@ item_quest = Quest(
     name="Zadanie ze zdobywaniem przedmiotów",
     description="Zdobądź określoną ilość przedmiotów.",
     tasks=[
-        {'name': 'Zdobyć 5 birzuteri ', 'completed': False, 'item': 'jewellery', 'type': 'item', 'target_count': 5, 'current_count': 0},
+        {'name': 'Zdobyć 5 birzuteri ', 'completed': False, 'item': 'jewellery', 'type': 'item', 'target_count_item': 5, 'current_count_item': 0},
+    ],
+    rewards={'xp': 100, 'gold': 40, 'item': 'example_reward_item'}
+)
+item_quest2 = Quest(
+    name="Zadanie ze zdobywaniem przedmiotów",
+    description="Zdobądź określoną ilość przedmiotów.",
+    tasks=[
+        {'name': 'Zdobyć 5 lether ', 'completed': False, 'item': 'lether', 'type': 'item', 'target_count_item': 50, 'current_count_item': 0},
     ],
     rewards={'xp': 100, 'gold': 40, 'item': 'example_reward_item'}
 )
@@ -156,9 +185,9 @@ head_village_quest = Quest(
     name="Zadania dla Wodza Wioski",
     description="Pokonaj bandytów w okolicy.",
     tasks=[
-        {'name': 'Pokonaj bandytów', 'completed': False, 'enemy_type': 'Bandit', 'type': 'kill', 'target_count': 3, 'current_count': 0},
-        {'name': 'Oczyść wioskę ze łuczników', 'completed': False, 'enemy_type': 'Archer', 'type': 'kill', 'target_count': 2, 'current_count': 0},
-        {'name': 'Oczyść wioskę ze magów', 'completed': False, 'enemy_type': 'Mage', 'type': 'kill', 'target_count': 1, 'current_count': 0},
+        {'name': 'Pokonaj bandytów', 'completed': False, 'enemy_type': 'Bandit', 'type': 'kill', 'target_count_kill': 3, 'current_count_kill': 0},
+        {'name': 'Oczyść wioskę ze łuczników', 'completed': False, 'enemy_type': 'Archer', 'type': 'kill', 'target_count_kill': 2, 'current_count_kill': 0},
+        {'name': 'Oczyść wioskę ze magów', 'completed': False, 'enemy_type': 'Mage', 'type': 'kill', 'target_count_kill': 1, 'current_count_kill': 0},
     ],
     rewards={'xp': 500, 'gold': 400}
 )
@@ -166,9 +195,17 @@ rat_nest_quest = Quest(
     name="Zadania dla Wodza Wioski",
     description="Oczyść wioskę ze szczurów.",
     tasks=[
-        {'name': 'Oczyść wioskę ze szczurów', 'completed': False, 'enemy_type': 'Rat', 'type': 'kill', 'target_count': 10, 'current_count': 0},
+        {'name': 'Oczyść wioskę ze szczurów', 'completed': False, 'enemy_type': 'Rat', 'type': 'kill', 'target_count_kill': 10, 'current_count_kill': 0},
     ],
     rewards={'xp': 100, 'gold': 50}
+)
+final_quest = Quest(
+    name="Zadania dla Wodza Wioski",
+    description="Zabij demona błąkającego się na świecie.",
+    tasks=[
+        {'name': 'Zabij demona błąkającego się na świecie', 'completed': False, 'enemy_type': 'Demon', 'type': 'kill', 'target_count_kill': 1, 'current_count_kill': 0},
+    ],
+    rewards={'xp': 1000, 'gold': 5000}
 )
 
 # Dodanie questów do QuestLogu
@@ -262,9 +299,6 @@ class NPC(pygame.sprite.Sprite):
 
                 pygame.time.Clock().tick(30)  # Kontroluj szybkość pętli
 
-
-
-
 class Healer(NPC):
     def __init__(self, game, x, y):
         
@@ -281,11 +315,11 @@ class Healer(NPC):
 
             # Dodaj tekst do powierzchni
             font = pygame.font.Font(None, 24)
-            text = font.render(f"Witam podróżniku, jestem uzdrowicielem. Czy potrzebujesz leczenia?", True, (255, 255, 255))
+            text = font.render(f"Witam podróżniku, jestem uzdrowicielem. Czego potrzebujesz?", True, (255, 255, 255))
             dialogue_surface.blit(text, (20, 20))
 
             # Dodaj opcje dialogowe
-            options = ["Potrzebuję leczenia", "Chciałbym kupić miksturę", "Aktualnie nic nie potrzebuję, żegnaj"]
+            options = ["Potrzebuję leczenia (90 złota)", "Chciałbym kupić miksturę (50 złota)" , "Aktualnie nic nie potrzebuję, żegnaj"]
             for i, option in enumerate(options):
                 option_text = font.render(f"{i + 1}. {option}", True, (255, 255, 255))
                 dialogue_surface.blit(option_text, (20, 80 + i * 30))
@@ -320,7 +354,7 @@ class Healer(NPC):
             # Potrzebuję leczenia
             if self.game.player.gold >= 90:
                 self.game.player.gold -= 90
-                self.game.player.heal(25)
+                self.game.player.heal(50)
 
         elif option == 2:
             # Chciałbym kupić miksturę
@@ -331,8 +365,6 @@ class Healer(NPC):
 
         elif option == 3:
             pass
-
-
 
 class Farmer(NPC):
     def __init__(self, game, x, y):
@@ -347,7 +379,6 @@ class Shopkeeper(NPC):
         super().__init__(game, x, y, name="Shopkeeper", dialogue="Witaj! Oferuję różne przedmioty. Co chciałbyś kupić?")
         self.image_npc = self.game.npc_spritesheet.get_sprite(2, 2+32, self.width, self.height)
         self.image_npc_active = self.game.npc_spritesheet.get_sprite(2+32, 2+32, self.width, self.height)
-        self.waiting_for_exit = True
     def initiate_dialogue(self):
         # Funkcja do rozpoczęcia dialogu
         if self.talkable:
@@ -385,8 +416,8 @@ class Shopkeeper(NPC):
             # Oczekuj na zamknięcie okna dialogowego po naciśnięciu klawisza 'Wyjdz'
             
             selected_option = None
-
-            while self.waiting_for_exit:
+            waiting_for_exit = True
+            while waiting_for_exit:
                 for event in pygame.event.get():
                     if event.type == pygame.KEYDOWN:
                         if pygame.K_1 <= event.key <= pygame.K_8:
@@ -394,7 +425,7 @@ class Shopkeeper(NPC):
 
                 if selected_option:
                     self.handle_dialog_option(selected_option)
-                    self.waiting_for_exit = False
+                    waiting_for_exit = False
 
                 pygame.time.Clock().tick(30)  # Kontroluj szybkość pętli
 
@@ -438,17 +469,32 @@ class Shopkeeper(NPC):
 
         # Tutaj możesz dodać logikę dotyczącą przyznawania nowych zadań dla gracza
         # Przykład logiczny: Załóżmy, że masz listę dostępnych zadań `available_quests`
-        available_quests = ["Pokonaj bandytów", "Zdobądź skarby", "Ochrona konwoju"]
-        if available_quests:
+        # available_quests = ["Pokonaj bandytów", "Zdobądź skarby", "Pozbądź się szczurów z wioski"]
+        available_quests =[
+            {'name':"Pokonaj bandytów",'quest':head_village_quest,'active_rat':False,'demon_active':False},
+            {'name':"Pozbądź się gniazda szczurów",'quest':rat_nest_quest,'active_rat':True,'demon_active':False},
+            {'name':"Zdobądź skarby",'quest':item_quest,'active_rat':False,'demon_active':False}
+                           ]
+        
+        if self.game.player.level == 3:
+            available_quests = [
+            {'name':"Zabij demona",'quest':final_quest,'active_rat':False,'demon_active':True}
+                           ]
+
+        #["Pokonaj bandytów", "Zdobądź skarby", "Pozbądź się szczurów z wioski"]
+        if available_quests and not self.game.quest_log.active_quest:
             selected_quest = random.choice(available_quests)
-            quest_text = f"Jasne, mam dla ciebie zadanie: {selected_quest}"
+            quest_text = f"Jasne, mam dla ciebie zadanie: {selected_quest['name']}"
             options = ["Chętnie pomogę!", "Może później"]
-            self.show_quest_dialog(quest_text, options)
+            self.show_quest_dialog(quest_text, options,selected_quest)
         else:
             # Brak dostępnych zadań
+            quest_text = f"Niestety, nie mam dla ciebie żadnych zadań."
+            options = ["Żegnaj"]
+            self.show_quest_dialog(quest_text, options)
             print("Niestety, nie mam dla ciebie żadnych zadań.")
 
-    def show_quest_dialog(self, quest_text, options):
+    def show_quest_dialog(self, quest_text, options,quest = None):
         # Stwórz nową powierzchnię na tekst
         quest_surface = pygame.Surface((600, 300), pygame.SRCALPHA)
         pygame.draw.rect(quest_surface, (0, 0, 0, 255), quest_surface.get_rect())  # Czarny prostokąt z przezroczystością
@@ -481,17 +527,22 @@ class Shopkeeper(NPC):
                     if pygame.K_1 <= event.key <= pygame.K_2:
                         selected_option = event.key - pygame.K_1 + 1
 
-            if selected_option:
-                self.handle_quest_dialog_option(selected_option)
+            if selected_option == 1:
+                self.game.quest_log.add_quest(quest['quest'])
+                if quest['active_rat']:
+                    for rats in self.game.rat_spawner:
+                        rats.active_quest_rat = True
+                    pass
+                if quest['demon_active']:
+                    for demon in self.game.demon_spawner:
+                        demon.active_quest_demon = True
+                    pass
+                waiting_for_exit = False
+            elif selected_option == 2:
                 waiting_for_exit = False
 
             pygame.time.Clock().tick(30)  # Kontroluj szybkość pętli
 
-    def handle_quest_dialog_option(self, option):
-        if option == 1:
-            print("Chętnie pomogę! (Opcja 1)")
-            # Tutaj możesz dodać logikę dotyczącą rozpoczęcia zadania
-        elif option == 2:
-            print("Może później (Opcja 2)")
-            # Tutaj możesz dodać logikę dotyczącą odmowy zadania
-
+        return selected_option
+    
+    

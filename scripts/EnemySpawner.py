@@ -5,6 +5,124 @@ from scripts.config import *
 from scripts.inventory import *
 
 # Attack Class
+class MeleeAttackDemon(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, target, damage):
+        self.game = game
+        self.x = x
+        self.y = y
+        self.width = TILESIZE
+        self.height = TILESIZE
+        self.target = target
+        self.damage = damage
+
+        self._layer = ENEMY_LAYER + 1
+        self.groups = self.game.enemies_attacks, self.game.all_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.animation_loop = 0
+        self.attack_direction = None  # Nowa zmienna do przechowywania kierunku ataku
+
+        self.right_animations = [self.game.attack_spritesheet.get_sprite(0, 64, self.width, self.height),
+                                 self.game.attack_spritesheet.get_sprite(32, 64, self.width, self.height),
+                                 self.game.attack_spritesheet.get_sprite(64, 64, self.width, self.height),
+                                 self.game.attack_spritesheet.get_sprite(96, 64, self.width, self.height),
+                                 self.game.attack_spritesheet.get_sprite(128, 64, self.width, self.height)]
+
+        self.down_animations = [self.game.attack_spritesheet.get_sprite(0, 32, self.width, self.height),
+                                self.game.attack_spritesheet.get_sprite(32, 32, self.width, self.height),
+                                self.game.attack_spritesheet.get_sprite(64, 32, self.width, self.height),
+                                self.game.attack_spritesheet.get_sprite(96, 32, self.width, self.height),
+                                self.game.attack_spritesheet.get_sprite(128, 32, self.width, self.height)]
+
+        self.left_animations = [self.game.attack_spritesheet.get_sprite(0, 96, self.width, self.height),
+                                self.game.attack_spritesheet.get_sprite(32, 96, self.width, self.height),
+                                self.game.attack_spritesheet.get_sprite(64, 96, self.width, self.height),
+                                self.game.attack_spritesheet.get_sprite(96, 96, self.width, self.height),
+                                self.game.attack_spritesheet.get_sprite(128, 96, self.width, self.height)]
+
+        self.up_animations = [self.game.attack_spritesheet.get_sprite(0, 0, self.width, self.height),
+                              self.game.attack_spritesheet.get_sprite(32, 0, self.width, self.height),
+                              self.game.attack_spritesheet.get_sprite(64, 0, self.width, self.height),
+                              self.game.attack_spritesheet.get_sprite(96, 0, self.width, self.height),
+                              self.game.attack_spritesheet.get_sprite(128, 0, self.width, self.height)]
+
+        self.image = self.up_animations[0]  # Początkowy kierunek animacji
+        self.rect = pygame.Rect(x, y, self.width, self.height)  # Utwórz rect tutaj
+
+        # Wybierz kierunek ataku względem celu
+        self.choose_attack_direction(target)
+
+    def update(self):
+        
+        self.animate()
+        self.check_player_collision()
+        
+
+    def choose_attack_direction(self, target):
+        dx = target.rect.centerx - self.rect.centerx
+        dy = target.rect.centery - self.rect.centery
+
+        if abs(dx) > abs(dy):
+            if dx > 0:
+                self.attack_direction = 'right'
+                self.move_attack_to_position()
+            else:
+                self.attack_direction = 'left'
+                self.move_attack_to_position()
+        else:
+            if dy > 0:
+                self.attack_direction = 'down'
+                self.move_attack_to_position()
+            else:
+                self.attack_direction = 'up'
+                self.move_attack_to_position()
+
+        self.set_attack_direction()
+
+    def set_attack_direction(self):
+        # Ustaw odpowiednią animację w zależności od kierunku ataku
+        if self.attack_direction == 'up':
+            self.image = self.up_animations[0]
+        elif self.attack_direction == 'down':
+            self.image = self.down_animations[0]
+        elif self.attack_direction == 'left':
+            self.image = self.left_animations[0]
+        elif self.attack_direction == 'right':
+            self.image = self.right_animations[0]
+
+   
+    def animate(self):
+        frame_index = int(self.animation_loop)  # Użyj int() do indeksacji
+
+        if self.attack_direction == 'right':
+            self.image = self.right_animations[frame_index]
+        elif self.attack_direction == 'left':
+            self.image = self.left_animations[frame_index]
+        elif self.attack_direction == 'down':
+            self.image = self.down_animations[frame_index]
+        elif self.attack_direction == 'up':
+            self.image = self.up_animations[frame_index]
+
+        self.animation_loop += 1/5
+
+        if self.animation_loop >= 5:
+            self.kill()
+    def move_attack_to_position(self):
+        # Przesuń atak na odpowiednią pozycję przed bandytą
+        if self.attack_direction == 'up':
+            self.rect.y -= TILESIZE
+        elif self.attack_direction == 'down':
+            self.rect.y += TILESIZE
+        elif self.attack_direction == 'left':
+            self.rect.x -= TILESIZE
+        elif self.attack_direction == 'right':
+            self.rect.x += TILESIZE
+
+    def check_player_collision(self):
+        hits = pygame.sprite.spritecollide(self, self.game.player_group, False)
+        for player in hits:
+            player.take_damage(self.damage)
+            self.kill()  # Zabij atak po trafieniu gracza
 class AttackBandit(pygame.sprite.Sprite):
     def __init__(self, game, x, y, target, damage):
         self.game = game
@@ -179,6 +297,64 @@ class AttackArcher(pygame.sprite.Sprite):
         if self.distance_travelled >= 6 * TILESIZE:
             self.kill()
 
+class RangedAttackDemon(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, target, damage):
+        self.game = game
+        self.x = x
+        self.y = y
+        self.width = TILESIZE // 2
+        self.height = TILESIZE // 2
+        self.target = target
+        self.damage = damage
+
+        self._layer = ENEMY_LAYER + 1
+        self.groups = self.game.enemies_attacks, self.game.all_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+
+        self.image = pygame.Surface((self.width, self.height),pygame.SRCALPHA)
+        self.image.fill((255, 0, 0))  # Czerwony kolor, dostosuj według potrzeb
+        self.rect = pygame.Rect(x, y, self.width, self.height)
+        
+
+        # Oblicz kierunek ataku na podstawie pozycji gracza
+        self.direction = self.calculate_direction()
+
+        self.distance_travelled = 0
+
+    def update(self):
+        self.move()
+        self.check_player_collision()
+        self.check_disappear()
+
+    def move(self):
+        # Przesuń atak w kierunku gracza
+        self.rect.x += self.direction[0] * TILESIZE/4
+        self.rect.y += self.direction[1] * TILESIZE/4
+
+        # Aktualizuj odległość przebytą
+        self.distance_travelled += TILESIZE/4
+
+    def calculate_direction(self):
+        # Oblicz kierunek ataku na podstawie pozycji gracza
+        dx = self.target.rect.centerx - self.rect.centerx
+        dy = self.target.rect.centery - self.rect.centery
+        distance = math.sqrt(dx**2 + dy**2)
+
+        if distance != 0:
+            return (dx / distance, dy / distance)
+        else:
+            return (0, 0)
+
+    def check_player_collision(self):
+        hits = pygame.sprite.spritecollide(self, self.game.player_group, False)
+        for player in hits:
+            player.take_damage(self.damage)
+            self.kill()
+
+    def check_disappear(self):
+        # Znikaj po przebyciu 6 kratek od początkowej pozycji gracza
+        if self.distance_travelled >= 6 * TILESIZE:
+            self.kill()
 class AttackMage(pygame.sprite.Sprite):
     def __init__(self, game, x, y, target, damage):
         self.game = game
@@ -388,6 +564,7 @@ class Enemy(pygame.sprite.Sprite):
                 self.damage_animation.kill()
                 self.drop_loot()
                 self.kill()
+                
             
 
     def start_immunity(self, duration):
@@ -494,6 +671,8 @@ class Rat(Enemy):
         if random.randint(1, 10) == 1:
             loot_item = self.game.all_items['lether'].new()
             self.game.inventory.add_item(loot_item)
+            self.game.inventory.count_lether +=1
+            self.game.quest_log.update(self.game.player, item="lether")
         xp_amount = 5
         self.game.player.gain_xp(xp_amount)
         
@@ -507,7 +686,7 @@ class Rat(Enemy):
 
     def kill(self) -> None:
         super().kill()
-        self.game.quest_log.update(self.game.player, self.enemy_type)
+        self.game.quest_log.update(self.game.player, enemy_type=self.enemy_type)
 
     def attack_player(self):
         # Zadaj obrażenia graczowi
@@ -543,9 +722,11 @@ class WildBoar(Enemy):
         self.charging = False 
     def drop_loot(self):
         # Szansa 10% na skórę od dzika
-        if random.randint(1, 10) == 1:
+        if random.randint(1, 100) <= 100:
             loot_item = self.game.all_items['lether'].new()
             self.game.inventory.add_item(loot_item)
+            self.game.inventory.count_lether +=1
+            self.game.quest_log.update(self.game.player, item="lether")
         xp_amount = 10
         self.game.player.gain_xp(xp_amount)
 
@@ -594,7 +775,7 @@ class WildBoar(Enemy):
                 self.end_charge()
     def kill(self) -> None:
         super().kill()
-        self.game.quest_log.update(self.game.player, self.enemy_type)
+        self.game.quest_log.update(self.game.player, enemy_type=self.enemy_type)
 
     def end_charge(self):
         self.charging = False
@@ -701,15 +882,19 @@ class Archer(Enemy):
 
 
         # Skradziona biżuteria z 15% szansą
-        if random.randint(1, 100) <= 15:
+        if random.randint(1, 100) <= 100:
             loot_item = self.game.all_items['jewellery'].new()
             self.game.inventory.add_item(loot_item)
+            # self.game.inventory.count_jewellery +=1
+            self.game.quest_log.update(self.game.player, item="jewellery")
     
 
         # Strzały z 50% szansą
         if random.randint(1, 100) <= 50:
             loot_item = self.game.all_items['arrow'].new()
             self.game.inventory.add_item(loot_item)
+            self.game.inventory.count_arrow +=1
+            self.game.quest_log.update(self.game.player, item="arrow")
     
         xp_amount = 15
         self.game.player.gain_xp(xp_amount)
@@ -717,7 +902,7 @@ class Archer(Enemy):
 
     def kill(self) -> None:
         super().kill()
-        self.game.quest_log.update(self.game.player, self.enemy_type)
+        self.game.quest_log.update(self.game.player, enemy_type=self.enemy_type)
 
 
     def update(self):
@@ -816,12 +1001,17 @@ class Bandit(Enemy):
         if random.randint(1, 100) <= 20:
             loot_item = self.game.all_items['jewellery'].new()
             self.game.inventory.add_item(loot_item)
+            self.game.inventory.count_jewellery +=1
+            self.game.quest_log.update(self.game.player, item="jewellery")
+            
             
 
         # Złamany sztylet z 10% szansą
         if random.randint(1, 100) <= 10:
             loot_item = self.game.all_items['broken_dagger'].new()
             self.game.inventory.add_item(loot_item)
+            self.game.inventory.count_broken_dagger +=1
+            self.game.quest_log.update(self.game.player, item="broken_dagger")
             
         # XP za pokonanie bandyty
         xp_amount = 20
@@ -829,7 +1019,7 @@ class Bandit(Enemy):
         
     def kill(self) -> None:
         super().kill()
-        self.game.quest_log.update(self.game.player, self.enemy_type)    
+        self.game.quest_log.update(self.game.player, enemy_type=self.enemy_type)    
     def update(self):
         super().update()
         self.attack_timer += 1
@@ -902,6 +1092,8 @@ class Mage(Enemy):
         if random.randint(1, 10) == 1:
             loot_item = self.game.all_items['book'].new()
             self.game.inventory.add_item(loot_item)
+            self.game.inventory.count_book +=1
+            self.game.quest_log.update(self.game.player, item="book")
         xp_amount = 30
         self.game.player.gain_xp(xp_amount)
     def update(self):
@@ -978,8 +1170,6 @@ class Mage(Enemy):
             if self.movement_loop <= -self.max_travel:
                 self.facing = random.choice(['left', 'right', 'up', 'down'])
                 self.movement_loop = 0
-
-
     def choose_random_attack(self):
         # Losowo wybierz atak
         # possible_attacks = ['heal','normal_attack']
@@ -992,10 +1182,8 @@ class Mage(Enemy):
 
         if chosen_attack == 'heal':
             self.heal_ability()
-            print("Heal")
         elif chosen_attack == 'normal_attack':
             self.attack()
-            print("Normal")
     def choose_target(self):
         # Find the nearest enemy to the mage
         enemies = [enemy for enemy in self.game.enemies if isinstance(enemy, Enemy)]
@@ -1017,7 +1205,7 @@ class Mage(Enemy):
             self.heal_cooldown = self.heal_cooldown_max
     def kill(self) -> None:
         super().kill()
-        self.game.quest_log.update(self.game.player, self.enemy_type)
+        self.game.quest_log.update(self.game.player, enemy_type=self.enemy_type)
 
     def attack(self):
         # Logika ataku dystansowego maga
@@ -1035,16 +1223,162 @@ class Mage(Enemy):
 class Demon(Enemy):
     def __init__(self, game, x, y):
         super().__init__(game, x, y)
-        self.image = self.game.enemies_spritesheet.get_sprite(10, 15, self.width, self.height)
-        self.hp = 50
+        self.image = self.game.demon_spritesheet.get_sprite(10, 15, self.width, self.height)
+        self.hp = 1#500
+        self.max_hp = self.hp
         self.enemy_type = "Demon"
+
+        self.distance_to_player = 5 * TILESIZE
+        self.min_distance_to_player = 3 * TILESIZE
+        self.attack_cooldown_melee = 0
+        self.attack_cooldown_range = 0
+        self.attack_cooldown_max = 60 * 1.5
+        self.attack_cooldown_max2 = 60 * 3
+
+        self.attacks = pygame.sprite.Group()
+
+        self.attack_timer_melee = 60*1.5
+        self.attack_timer_range = 60*1
+        self.facing = 'down'
+        self.frame_index = 0
+        self.animation_speed = 200
+        self.last_update = 0
+
+        self.attack_range = 4
+
+        self.frames = {
+            'down': [self.game.demon_spritesheet.get_sprite(2, 2, self.width, self.height),
+                     self.game.demon_spritesheet.get_sprite(35, 2, self.width, self.height),
+                     self.game.demon_spritesheet.get_sprite(67, 2, self.width, self.height)],
+            'up': [self.game.demon_spritesheet.get_sprite(2, 2 + 32, self.width, self.height),
+                   self.game.demon_spritesheet.get_sprite(35, 2 + 32, self.width, self.height),
+                   self.game.demon_spritesheet.get_sprite(67, 2 + 32, self.width, self.height)],
+            'right': [self.game.demon_spritesheet.get_sprite(2, 2 + 64, self.width, self.height),
+                      self.game.demon_spritesheet.get_sprite(35, 2 + 64, self.width, self.height),
+                      self.game.demon_spritesheet.get_sprite(67, 2 + 64, self.width, self.height)],
+            'left': [self.game.demon_spritesheet.get_sprite(2, 2 + 96, self.width, self.height),
+                     self.game.demon_spritesheet.get_sprite(35, 2 + 96, self.width, self.height),
+                     self.game.demon_spritesheet.get_sprite(67, 2 + 96, self.width, self.height)]
+        }
+        self.image = self.frames[self.facing][self.frame_index]
+
+    def melee_attack_player(self):
+        if self.player_distance <= 1.5 * TILESIZE:
+            melee_attack = MeleeAttackDemon(self.game, self.rect.x, self.rect.y, self.game.player, damage=15)
+            self.game.enemies_attacks.add(melee_attack)
+
+    def range_attack_player(self):
+        if self.player_distance >= 3 * TILESIZE:
+            ranged_attack = RangedAttackDemon(self.game, self.rect.x, self.rect.y, self.game.player, damage=10)
+            self.game.enemies_attacks.add(ranged_attack)
+
+    def check_attack_collision(self):
+        # Add demon-specific attack collision logic here
+        pass
+
+    def animate(self):
+        now = pygame.time.get_ticks()
+
+        if now - self.last_update > self.animation_speed:
+            self.last_update = now
+            self.frame_index = (self.frame_index + 1) % len(self.frames[self.facing])
+            self.image = self.frames[self.facing][self.frame_index]
+
+    def drop_loot(self):
+        gold_amount = random.randint(7, 15)
+        self.game.player.gold += gold_amount
+
+    
+        loot_item = self.game.all_items['skull'].new()
+        self.game.inventory.add_item(loot_item)
+        self.game.inventory.count_book += 1
+        self.game.quest_log.update(self.game.player, item="skull")
+        xp_amount = 3000
+        self.game.player.gain_xp(xp_amount)
 
     def kill(self) -> None:
         super().kill()
-        self.game.quest_log.update(self.game.player, self.enemy_type)
-    def attack(self):
-        # Logika ataku dystansowego demona
-        pass
+        self.game.quest_log.update(self.game.player, enemy_type=self.enemy_type)
+
+    def update(self):
+        super().update()
+        self.player_distance = pygame.math.Vector2(self.game.player.rect.centerx - self.rect.centerx,
+                                                   self.game.player.rect.centery - self.rect.centery).length()
+
+        if self.attack_timer_melee <= 0 and self.player_distance <= 1.5 * TILESIZE:
+            self.melee_attack_player()
+            self.attack_timer_melee = self.attack_cooldown_melee
+
+        # Corrected the attribute name here
+        if self.attack_timer_range <= 0 and self.player_distance > 3 * TILESIZE:
+            self.range_attack_player()
+            self.attack_timer_range = self.attack_cooldown_range  # Use attack_cooldown_range here
+
+        self.attack_timer_melee -= 1
+        # Corrected the attribute name here
+        self.attack_timer_range -= 1
+
+        if self.attack_cooldown_melee <= 0:
+            self.attack_cooldown_melee = self.attack_cooldown_max
+        if self.attack_cooldown_range <= 0:
+            self.attack_cooldown_range = self.attack_cooldown_max2
+
+        self.check_attack_collision()
+        self.animate()
+    def movement(self):
+        player = self.game.player
+        distance_to_player = pygame.math.Vector2(player.rect.centerx - self.rect.centerx,
+                                                player.rect.centery - self.rect.centery).length()
+
+        if distance_to_player < self.min_distance_to_player:
+            angle = math.atan2(self.rect.y - player.rect.y, self.rect.x - player.rect.x)
+            self.x_change = self.speed * math.cos(angle)
+            self.y_change = self.speed * math.sin(angle)
+
+            if abs(self.x_change) > abs(self.y_change):
+                if self.x_change > 0:
+                    self.facing = 'left'
+                else:
+                    self.facing = 'right'
+            else:
+                if self.y_change > 0:
+                    self.facing = 'up'
+                else:
+                    self.facing = 'down'
+        elif distance_to_player < self.distance_to_player:
+            self.x_change = 0
+            self.y_change = 0
+        elif distance_to_player < self.distance_to_player + 1:
+            angle = math.atan2(player.rect.y - self.rect.y, player.rect.x - self.rect.x)
+            self.x_change = self.speed * math.cos(angle)
+            self.y_change = self.speed * math.sin(angle)
+
+            if abs(self.x_change) > abs(self.y_change):
+                if self.x_change > 0:
+                    self.facing = 'right'
+                else:
+                    self.facing = 'left'
+            else:
+                if self.y_change > 0:
+                    self.facing = 'down'
+                else:
+                    self.facing = 'up'
+        else:
+            if self.facing == 'left':
+                self.x_change -= self.speed
+            elif self.facing == 'right':
+                self.x_change += self.speed
+            elif self.facing == 'up':
+                self.y_change -= self.speed
+            elif self.facing == 'down':
+                self.y_change += self.speed
+
+            self.movement_loop -= 1
+            if self.movement_loop <= -self.max_travel:
+                self.facing = random.choice(['left', 'right', 'up', 'down'])
+                self.movement_loop = 0
+
+
 
 
 # Spawner Class
@@ -1056,6 +1390,8 @@ class EnemySpawner(pygame.sprite.Sprite):
         self.image = pygame.Surface((TILESIZE, TILESIZE), pygame.SRCALPHA)
         self.x = x * TILESIZE
         self.y = y * TILESIZE
+
+        
 
         self.x_spawn=x
         self.y_spawn=y
@@ -1087,7 +1423,88 @@ class EnemySpawner(pygame.sprite.Sprite):
 
             # Zresetuj licznik czasu spawnu
             self.spawn_timer = 0
+class RatSpawner(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, spawn_rate, max_spawn, enemy_class,active_quest = False):
+        self.game = game
+        self.groups = self.game.all_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.image = pygame.Surface((TILESIZE, TILESIZE), pygame.SRCALPHA)
+        self.x = x * TILESIZE
+        self.y = y * TILESIZE
 
+        self.active_quest_rat = active_quest
+
+        self.x_spawn=x
+        self.y_spawn=y
+        
+        self.spawn_rate = spawn_rate  # Określa, co ile klatek pojawi się nowy przeciwnik
+        self.spawn_timer = 0
+        self.max_spawn = max_spawn  # Maksymalna liczba przeciwników jednocześnie
+        self.enemy_class = enemy_class
+        self.spawned_enemies = pygame.sprite.Group()  # Grupa do śledzenia spawned enemies
+        
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+        
+
+    def update(self):
+        # Zliczaj klatki
+        self.spawn_timer += 1
+        # Sprawdź, czy przyszedł czas na stworzenie nowego przeciwnika
+        if self.spawn_timer >= self.spawn_rate and len(self.spawned_enemies) < self.max_spawn and self.active_quest_rat:
+            
+                        
+            # Stwórz nowego przeciwnika i ustaw go w losowym miejscu wokół spawnera
+            enemy = self.enemy_class(self.game, self.x_spawn + 0 * TILESIZE,
+                                self.y_spawn + 0 * TILESIZE)
+            self.spawned_enemies.add(enemy)  # Dodaj przeciwnika do grupy spawned enemies
+            self.game.all_sprites.add(enemy)  # Dodaj przeciwnika do ogólnej grupy all_sprites
+            self.game.enemies.add(enemy)  # Dodaj przeciwnika do ogólnej grupy all_sprites
+
+            # Zresetuj licznik czasu spawnu
+            self.spawn_timer = 0
+class DemonSpawner(pygame.sprite.Sprite):
+    def __init__(self, game, x, y, spawn_rate, max_spawn, enemy_class,active_quest = False):
+        self.game = game
+        self.groups = self.game.all_sprites
+        pygame.sprite.Sprite.__init__(self, self.groups)
+        self.image = pygame.Surface((TILESIZE, TILESIZE), pygame.SRCALPHA)
+        self.x = x * TILESIZE
+        self.y = y * TILESIZE
+
+        self.active_quest_demon = active_quest
+
+        self.x_spawn=x
+        self.y_spawn=y
+        
+        self.spawn_rate = spawn_rate  # Określa, co ile klatek pojawi się nowy przeciwnik
+        self.spawn_timer = 0
+        self.max_spawn = max_spawn  # Maksymalna liczba przeciwników jednocześnie
+        self.enemy_class = enemy_class
+        self.spawned_enemies = pygame.sprite.Group()  # Grupa do śledzenia spawned enemies
+        
+        self.rect = self.image.get_rect()
+        self.rect.x = self.x
+        self.rect.y = self.y
+        
+
+    def update(self):
+        # Zliczaj klatki
+        self.spawn_timer += 1
+        # Sprawdź, czy przyszedł czas na stworzenie nowego przeciwnika
+        if self.spawn_timer >= self.spawn_rate and len(self.spawned_enemies) < self.max_spawn and self.active_quest_demon:
+            
+                        
+            # Stwórz nowego przeciwnika i ustaw go w losowym miejscu wokół spawnera
+            enemy = self.enemy_class(self.game, self.x_spawn + 0 * TILESIZE,
+                                self.y_spawn + 0 * TILESIZE)
+            self.spawned_enemies.add(enemy)  # Dodaj przeciwnika do grupy spawned enemies
+            self.game.all_sprites.add(enemy)  # Dodaj przeciwnika do ogólnej grupy all_sprites
+            self.game.enemies.add(enemy)  # Dodaj przeciwnika do ogólnej grupy all_sprites
+
+            # Zresetuj licznik czasu spawnu
+            self.spawn_timer = 0
 class EnemySpawnerPack(pygame.sprite.Sprite):
     def __init__(self, game, x, y, spawn_rate, max_spawn):
         self.game = game

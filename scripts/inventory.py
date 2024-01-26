@@ -50,13 +50,14 @@ def calculate_gold_display_position():
         return x, y
 
 class Item:
-    def __init__(self, name, image_path):
+    def __init__(self, name, image_path,gold):
         self.image_path = image_path
         self.name = name
         self.image = pygame.transform.scale(pygame.image.load(image_path).convert_alpha(), (ITEM_SIZE, ITEM_SIZE))
         self.image.set_colorkey((0, 0, 0))
         self.rect = self.image.get_rect()
         self.slot = None
+        self.gold_value = gold
 
     def set_position(self, x, y):
         self.rect.x = x
@@ -67,18 +68,19 @@ class Item:
         self.rect.y = y
     def new(self):
         # Metoda do tworzenia nowej kopii obiektu
-        return type(self)(self.name, self.image_path)
+        return type(self)(self.name, self.image_path,self.gold_value)
 
 class Armor(Item):
-    def __init__(self, name,image_path,armor):
-        super().__init__(name, image_path)
+    def __init__(self, name,image_path,armor,gold):
+        super().__init__(name, image_path,gold)
         self.equipped = False
         self.armor = armor
         self.image = pygame.transform.scale(pygame.image.load(image_path).convert_alpha(), (ITEM_SIZE, ITEM_SIZE))
         self.image.set_colorkey((0, 0, 0))
+        self.gold_value = gold
     def new(self):
         # Metoda do tworzenia nowej kopii obiektu
-        return type(self)(self.name, self.image_path,self.armor)
+        return type(self)(self.name, self.image_path,self.armor,self.gold_value)
 
     def wear(self):
         if not self.equipped:
@@ -93,16 +95,17 @@ class Armor(Item):
 
 
 class Weapon(Item):
-    def __init__(self, name,image ,dmg):
-        super().__init__(name, image)
+    def __init__(self, name,image ,dmg,gold):
+        super().__init__(name, image,gold)
         self.equipped = False
         self.dmg = dmg
         self.crt = 0
         self.image = pygame.transform.scale(pygame.image.load(image).convert_alpha(), (ITEM_SIZE, ITEM_SIZE))
         self.image.set_colorkey((0, 0, 0))
+        self.gold_value = gold
     def new(self):
         # Metoda do tworzenia nowej kopii obiektu
-        return type(self)(self.name, self.image_path,self.dmg)
+        return type(self)(self.name, self.image_path,self.dmg,self.gold_value)
 
     def equip(self):
         if not self.equipped:
@@ -116,17 +119,18 @@ class Weapon(Item):
         
 
 class Potion(Item):
-    def __init__(self, name,image_path):
-        super().__init__(name,image_path)
+    def __init__(self, name,image_path,gold):
+        super().__init__(name,image_path,gold)
         self.equipped = False
         self.healing = 10
         original_image = pygame.image.load("assets\img\potion.png").convert_alpha()
         self.image = pygame.transform.scale(original_image, (ITEM_SIZE, ITEM_SIZE))
         self.image.set_colorkey((0, 0, 0))
+        self.gold_value = gold
 
     def new(self):
         # Metoda do tworzenia nowej kopii obiektu
-        return type(self)(self.name, self.image_path)
+        return type(self)(self.name, self.image_path,self.gold_value)
 
 class Tool(Item):
     def __init__(self, name ,dmg):
@@ -161,6 +165,14 @@ class Inventory:
         self.DEL_RECT = pygame.Rect(DEL_SLOT_X, DEL_SLOT_Y, SLOT_SIZE, SLOT_SIZE)
         self.GOLD_DISPLAY_X, self.GOLD_DISPLAY_Y  = calculate_gold_display_position()
 
+
+        self.count_jewellery = 0
+        self.count_arrow = 0
+        self.count_lether = 0
+        self.count_book = 0
+        self.count_broken_dagger = 0
+
+
     def draw_gold(self):
         font = pygame.font.Font(None, 36)
         text = font.render(f"Gold: {self.game.player.gold}", True, BLACK)
@@ -172,20 +184,7 @@ class Inventory:
     def remove_gold(self, amount):
         self.gold -= amount if self.gold >= amount else self.gold
     
-    
-    # def add_test_items(self, item_type):
-    #     if item_type == 1:
-    #         # Dodaj potion
-    #         self.add_item(self.game.all_items['potion'].new())
-    #     elif item_type == 2:
-    #         # Dodaj armor
-    #         armor = Armor("Test Armor",5)
-    #         self.add_item(armor)
-    #     elif item_type == 3:
-    #         # Dodaj weapon
-    #         weapon = Tool("Test Weapon",1,0)
-    #         self.add_item(weapon)
-            
+           
     def add_item(self, item, slot=None):
         if slot is not None:
             if self.slots[slot] is None:
