@@ -74,6 +74,7 @@ class Game:
         
         
         self.inventory.add_item(self.all_items['rusted_sword'].new())  # Dodanie testowej broni do drugiego slotu
+        self.inventory.add_item(self.all_items['skull'].new())  # Dodanie testowej broni do drugiego slotu
 
         
         
@@ -137,7 +138,7 @@ class Game:
                     self.camera = Camera(self, self.player)
                     Ground(self, j, i)
                 elif column == "D":
-                    EnemySpawner(self,j,i,1*FPS,5,WildBoar)
+                    EnemySpawner(self,j,i,5*FPS,5,WildBoar)
                     Ground(self, j, i)
                 elif column == "N":
                     NPC(self, j, i)
@@ -176,9 +177,6 @@ class Game:
                     Ground(self, j, i)
                 elif column =='?':
                     EnemySpawnerPack(self,j,i,FPS*5,4)
-                    Ground(self, j, i)
-                elif column =='a':
-                    # Demon(self,j,i)
                     Ground(self, j, i)
                 else:
                     Ground(self, j, i)

@@ -219,14 +219,14 @@ class Inventory:
 
     def draw_context_menu(self, selected_item):
         
-        menu_options = ["Drop"]
+        menu_options = ["Spienięż"]
         if isinstance(selected_item, Potion):
-            menu_options.append("Drink")
+            menu_options.append("Wypij")
         elif isinstance(selected_item, (Weapon, Armor)):
             if selected_item.equipped:
-                menu_options.append("Unequip")
+                menu_options.append("Zdejmij")
             else:
-                menu_options.append("Equip")
+                menu_options.append("Załóż")
 
         font = pygame.font.Font(None, 24)
 
@@ -244,10 +244,11 @@ class Inventory:
                 option_index = (event.pos[1] - menu_rect.y - 10) // 30
                 if 0 <= option_index < len(menu_options):
                     selected_option = menu_options[option_index]
-                    if selected_option == "Drop":
+                    if selected_option == "Spienięż":
                         self.remove_item(selected_item.slot)
+                        self.game.player.gold += selected_item.gold_value
                         self.context_menu_active = False
-                    elif selected_option == "Drink" and isinstance(selected_item, Potion):
+                    elif selected_option == "Wypij" and isinstance(selected_item, Potion):
                         if self.game.player.hp == self.game.player.max_hp:
                             pass
                         else:
@@ -259,12 +260,12 @@ class Inventory:
                                 
 
                         self.context_menu_active = False
-                    elif selected_option == "Equip" and isinstance(selected_item, (Weapon, Armor)):
+                    elif selected_option == "Załóż" and isinstance(selected_item, (Weapon, Armor)):
                         self.equip_item()
                         self.remove_item(self.original_slot)
                         
                         self.context_menu_active = False
-                    elif selected_option == "Unequip" and isinstance(selected_item, (Weapon, Armor)):
+                    elif selected_option == "Zdejmij" and isinstance(selected_item, (Weapon, Armor)):
                         self.unequip_item()
                         self.context_menu_active = False
 
@@ -385,6 +386,7 @@ class Inventory:
                    
                     if self.DEL_RECT.collidepoint(pygame.mouse.get_pos()):
                         self.remove_item(self.original_slot)
+                        self.game.player.gold += self.dragging_item.gold_value
                     elif self.add_item(self.dragging_item, slot_index) is False:
                         self.add_item(self.dragging_item, self.original_slot)
                             

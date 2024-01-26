@@ -1224,7 +1224,7 @@ class Demon(Enemy):
     def __init__(self, game, x, y):
         super().__init__(game, x, y)
         self.image = self.game.demon_spritesheet.get_sprite(10, 15, self.width, self.height)
-        self.hp = 1#500
+        self.hp = 500
         self.max_hp = self.hp
         self.enemy_type = "Demon"
 
