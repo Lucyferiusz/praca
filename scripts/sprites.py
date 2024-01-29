@@ -44,7 +44,7 @@ class Player(pygame.sprite.Sprite):
         self.groups = self.game.all_sprites,self.game.player_group
         pygame.sprite.Sprite.__init__(self, self.groups)
 
-        self.level = 0  # Poziom gracza
+        self.level = 3  # Poziom gracza
         self.xp_required = [500, 1000, 2000,100000]  # Ilość XP potrzebna do osiągnięcia kolejnych poziomów
         self.unlocked_skills = []  # Lista odblokowanych zdolności
         self.xp = 0

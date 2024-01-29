@@ -9,8 +9,16 @@ from scripts.game_over_screen import *
 from scripts.start_menu import *
 from scripts.Skill import *
 
+# !!!!!
+from dev import *
+# !!!!!
+
+
 class Game:
     def __init__(self):
+
+        
+
         pygame.init()
         pygame.mixer.init()
         background_music_path = "assets/music/1.mp3"
@@ -51,6 +59,7 @@ class Game:
         #itemy
         
         self.all_items ={
+            #weapon
             "rusted_sword": Weapon("Zardzewiały miecz","assets/img/rust_sword.png",5,0),
             "sword":Weapon("Ostry miecz","assets/img/sword_1.png",10,25),
             "saber":Weapon("Szabla","assets/img/sword_2.png",15,100),
@@ -65,16 +74,16 @@ class Game:
             "lether": Item("Skóra","assets/img/lether.png",2),
             "jewellery": Item("Birzuteria","assets/img/jewellery.png",15),
             "arrow": Item("Strzały","assets/img/arrow.png",1),
-            "book": Item("Księga","assets/img/book.png",5), # TODO nowa grafika
+            "book": Item("Księga","assets/img/book.png",5),
             "skull": Item("Czaszka","assets/img/demon_skull.png",1000),
-            "broken_dagger": Item("Złamany miecz","assets/img/broken_dagger.png",8), # TODO nowa grafika
+            "broken_dagger": Item("Złamany miecz","assets/img/broken_dagger.png",8)
 
 
         }
         
         
         self.inventory.add_item(self.all_items['rusted_sword'].new())  # Dodanie testowej broni do drugiego slotu
-        self.inventory.add_item(self.all_items['skull'].new())  # Dodanie testowej broni do drugiego slotu
+        # self.inventory.add_item(self.all_items['skull'].new())  # Dodanie testowego przedmiotu
 
         
         
@@ -317,6 +326,13 @@ class Game:
         game_over_screen = GameOverScreen(self.WIN_WIDTH, self.WIN_HEIGHT)
         game_over_screen.show()
         pass
+    def intro_dialog_screen(self):
+        #!!!!!
+        test = IntroDialog(self.WIN_WIDTH,self.WIN_HEIGHT)
+        test.show()
+        #!!!!!
+
+
     
     # Ekran początkowy gry
     def intro_screen(self):  
@@ -326,6 +342,7 @@ class Game:
         if choice == "start":
             self.new()
             while self.running:
+                self.intro_dialog_screen()
                 self.main()
                 self.game_over()
         elif choice == "load":
