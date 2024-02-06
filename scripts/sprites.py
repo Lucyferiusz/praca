@@ -44,7 +44,7 @@ class Player(pygame.sprite.Sprite):
         self.groups = self.game.all_sprites,self.game.player_group
         pygame.sprite.Sprite.__init__(self, self.groups)
 
-        self.level = 3  # Poziom gracza
+        self.level = 0  # Poziom gracza
         self.xp_required = [500, 1000, 2000,100000]  # Ilość XP potrzebna do osiągnięcia kolejnych poziomów
         self.unlocked_skills = []  # Lista odblokowanych zdolności
         self.xp = 0
@@ -185,7 +185,7 @@ class Player(pygame.sprite.Sprite):
         self.collide_blocks('y')
         self.x_change = 0
         self.y_change = 0
-        self.check_x_keypress()
+        
         self.handle_invulnerability()
         if self.immunity_timer > 0:
             self.immunity_timer -= 1
@@ -196,13 +196,7 @@ class Player(pygame.sprite.Sprite):
             now = pygame.time.get_ticks()
             if now - self.invulnerable_timer >= self.invulnerable_duration:
                 self.invulnerable = False  # Zakończ nietykalność po upływie okresu ochrony
-    def check_x_keypress(self):
-        keys = pygame.key.get_pressed()
-        if keys[pygame.K_x]:
-            if not self.invulnerable:  # Sprawdź, czy gracz nie jest nietykalny
-                self.hp -= 10
-                self.invulnerable = True  # Ustaw nietykalność po otrzymaniu obrażeń
-                self.invulnerable_timer = pygame.time.get_ticks()
+
     def draw_health_bar(self):
         # Oblicz długość paska HP w zależności od bieżącego stanu HP
         hp_length = int((self.hp / self.max_hp) * self.hp_bar_length)
@@ -413,5 +407,8 @@ class Water(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x=self.x
         self.rect.y=self.y
+
+        
+
 
         

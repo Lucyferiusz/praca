@@ -8,11 +8,9 @@ from scripts.Quest import *
 from scripts.game_over_screen import *
 from scripts.start_menu import *
 from scripts.Skill import *
-
 # !!!!!
 from dev import *
 # !!!!!
-
 
 class Game:
     def __init__(self):
@@ -128,7 +126,6 @@ class Game:
         text_rect = text_surface.get_rect()
         text_rect.center = (x, y)
         self.screen.blit(text_surface, text_rect)
-
     # Metoda tworząca mapę z kafelkami
     def createTilemap(self):
         self.map_width = int(self.map_width * self.zoom_level)
@@ -139,7 +136,6 @@ class Game:
                     Water(self, j, i)
                 elif column == 'B':
                     Bridge(self, j, i)
-                    pass
                 elif column == '0':
                     Ground(self, j, i)
                 elif column == "P":
@@ -189,7 +185,6 @@ class Game:
                     Ground(self, j, i)
                 else:
                     Ground(self, j, i)
-
     # Metoda inicjująca nową grę
     def new(self):
         self.playing = True
@@ -203,7 +198,6 @@ class Game:
         self.damage_frame_group = pygame.sprite.LayeredUpdates()
 
         self.createTilemap()
-
     # Metoda obsługująca zdarzenia
     def events(self):
         for event in pygame.event.get():
@@ -260,24 +254,19 @@ class Game:
             if self.inventory_open:
                 self.inventory.handle_events(event)
             if self.skillTree_open:
-                self.skillTree.handle_mouse_click(event)
-            
-            
-
+                self.skillTree.handle_mouse_click(event)          
     # Metoda aktualizująca stan gry
     def update(self):
         self.all_sprites.update()
                 
         pygame.display.update()
         self.skillTree.skills[2].update()
-
     # Metoda sprawdzająca interakcje z NPC
     def check_interactions(self):
         for npc in pygame.sprite.spritecollide(self.player, self.npcs, False):
             if npc.talkable:
                 npc.initiate_dialogue()
-
-    # Metoda rysująca obiekty na ekranie
+     # Metoda rysująca obiekty na ekranie
     def draw(self):
         self.camera.update(self.player)
         for sprite in self.all_sprites:
@@ -305,18 +294,8 @@ class Game:
         self.skillTree.skills[1].update()
         pygame.display.flip()
         self.clock.tick(FPS)
-
-    # Główna pętla gry
-    def main(self):
-        while self.playing:
-            self.events()
-            self.update()
-            self.draw()
-            if self.win_game:
-                self.game_win()
-            
-        self.running = False
-
+    
+    
     # Metoda wyświetlająca ekran końca gry
     def game_over(self):
         game_over_screen = GameOverScreen(self.WIN_WIDTH, self.WIN_HEIGHT)
@@ -331,9 +310,6 @@ class Game:
         test = IntroDialog(self.WIN_WIDTH,self.WIN_HEIGHT)
         test.show()
         #!!!!!
-
-
-    
     # Ekran początkowy gry
     def intro_screen(self):  
         start_menu = StartMenu (self.WIN_WIDTH, self.WIN_HEIGHT)
@@ -350,6 +326,20 @@ class Game:
         elif choice == "quit":
             pygame.quit()
             sys.exit()
+
+    
+    # Główna pętla gry
+    
+    
+    def main(self):
+        while self.playing:
+            self.events()
+            self.update()
+            self.draw()
+            if self.win_game:
+                self.game_win()
+            
+        self.running = False
 
 g = Game()
 g.intro_screen()
